@@ -1,0 +1,32 @@
+# Build output (make build / make linux)
+/sonarc
+/build/
+
+# Go test and profiling output
+*.test
+*.prof
+cover.out
+coverage.out
+coverage.html
+
+# Code indexes, created when sonarc or its rebuild (Ctrl+K x) runs on
+# this repository
+/tags
+/cscope.*
+/ncscope.*
+
+# sonarc's own temporaries: atomic saves (.name.sonarc123) and index
+# rebuilds, left behind only if it is killed mid-write
+.*.sonarc*
+.sonarc-rebuild.*
+*.sonarc-prev
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Personal Claude Code settings; the shared .claude/settings.json is kept
+.claude/settings.local.json
