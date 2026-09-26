@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/ui"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // cmdCloseFile closes the file on screen, asking first if it has unsaved

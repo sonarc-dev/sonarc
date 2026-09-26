@@ -9,7 +9,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/index/rebuild"
+	"github.com/sonarc-dev/sonarc/internal/index/rebuild"
 )
 
 // fakeKernelMake stands in for a kernel's `make cscope` / `make tags`. With

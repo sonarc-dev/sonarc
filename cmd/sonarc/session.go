@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // session is how a project was left: the files open in it, where each one's

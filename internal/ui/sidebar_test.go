@@ -7,10 +7,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/filetree"
-	"sonarc/internal/term"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/filetree"
+	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // newTestUI builds a UI backed by a simulation screen of the given size, so

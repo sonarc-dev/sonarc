@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"sonarc/internal/index/provider"
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 
 	"github.com/gdamore/tcell/v2"
 )

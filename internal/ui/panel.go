@@ -8,8 +8,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/index/provider"
-	"sonarc/internal/search"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/search"
 )
 
 // Panel is the results list shown along the bottom: the output of find

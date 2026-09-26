@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 )
 
 // Options controls how a pattern is interpreted.

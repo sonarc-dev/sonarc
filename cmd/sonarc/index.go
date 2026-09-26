@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/cscope"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/cscope"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/tags"
 
 	"github.com/gdamore/tcell/v2"
 )

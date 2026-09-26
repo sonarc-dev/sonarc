@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 func TestGitGrepFindsTrackedAndUntrackedSource(t *testing.T) {

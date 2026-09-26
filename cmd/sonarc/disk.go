@@ -6,8 +6,8 @@ import (
 	"syscall"
 	"time"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // diskCheckEvery is how often open files are compared with the disk. A stat

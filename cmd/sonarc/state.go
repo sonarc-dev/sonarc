@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"sonarc/internal/term"
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 )
 
 // state is what sonarc remembers between sessions. It is deliberately tiny:

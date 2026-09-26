@@ -1,4 +1,4 @@
-module sonarc
+module github.com/sonarc-dev/sonarc
 
 go 1.24.0
 

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/index/cscope"
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/index/cscope"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // symbolUnderCursor returns the symbol to look up.

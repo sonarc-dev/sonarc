@@ -5,8 +5,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/search"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/search"
 )
 
 // maxHighlights bounds how many occurrences are highlighted at once. On a file

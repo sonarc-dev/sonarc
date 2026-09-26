@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/filetree"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/term"
 	"os"
 	"path/filepath"
-	"sonarc/internal/buffer"
-	"sonarc/internal/filetree"
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/term"
 	"strings"
 	"testing"
 	"time"

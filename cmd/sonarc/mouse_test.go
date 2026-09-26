@@ -9,8 +9,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/index/provider"
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 )
 
 // The core regression risk of adding a left column: a click must still land on

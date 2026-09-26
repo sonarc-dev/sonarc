@@ -6,9 +6,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/filetree"
-	"sonarc/internal/term"
-	"sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/filetree"
+	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
 )
 
 // sidebarMinCols is the terminal width below which the sidebar auto-hides,

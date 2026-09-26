@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // tree writes a set of files under a temp dir and returns its path.

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // maxSymbolFiles bounds how many files have symbols extracted. Symbols are what

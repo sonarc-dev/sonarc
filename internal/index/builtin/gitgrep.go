@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // ErrNotGit means git cannot search this directory: git is not installed, or

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"

@@ -12,7 +12,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
 )
 
 func gitRun(t *testing.T, dir string, args ...string) {

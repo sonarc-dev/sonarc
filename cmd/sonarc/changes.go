@@ -5,7 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 )
 
 // updateChangesList refills the sidebar's Changes section from git's status.

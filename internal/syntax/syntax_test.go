@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 )
 
 // classes renders one line's highlighting as a string, one character per byte,

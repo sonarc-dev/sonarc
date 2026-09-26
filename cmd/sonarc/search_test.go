@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 	"os/exec"
 	"path/filepath"
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/provider"
 	"strings"
 	"testing"
 	"time"

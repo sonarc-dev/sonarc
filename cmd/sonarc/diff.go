@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
 	"os"
-	"sonarc/internal/buffer"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/ui"
-	"sonarc/internal/vcs"
 
 	"github.com/gdamore/tcell/v2"
 )

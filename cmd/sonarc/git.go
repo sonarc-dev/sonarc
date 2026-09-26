@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/vcs"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // gitRefreshEvery bounds how stale the list of changed files can get when

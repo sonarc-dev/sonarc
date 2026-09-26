@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // Provider adapts a cscope database to the CodeIntel interface.

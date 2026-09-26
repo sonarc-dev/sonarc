@@ -29,9 +29,9 @@ import (
 	"strings"
 	"time"
 
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/tags"
-	"sonarc/internal/proc"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/proc"
 )
 
 // Plan is how a rebuild will be done, decided before it starts so the user can

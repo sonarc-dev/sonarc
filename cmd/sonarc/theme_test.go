@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/term"
 
 	"github.com/gdamore/tcell/v2"
 )

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/text"
+	"github.com/sonarc-dev/sonarc/internal/text"
 )
 
 // DiffLine is one row of a diff view.

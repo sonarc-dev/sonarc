@@ -9,8 +9,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/term"
 )
 
 func TestTypingAppearsOnScreen(t *testing.T) {

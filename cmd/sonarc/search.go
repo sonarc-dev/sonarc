@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 	"regexp"
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/provider"
 	"strings"
 	"time"
 )

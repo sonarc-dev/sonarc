@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/sonarc-dev/sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
 	"os"
 	"path/filepath"
-	"sonarc/internal/ui"
-	"sonarc/internal/vcs"
 	"strings"
 	"testing"
 

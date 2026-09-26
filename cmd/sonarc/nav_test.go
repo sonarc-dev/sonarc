@@ -6,8 +6,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // The headline feature: put the cursor on a call and jump to the definition,

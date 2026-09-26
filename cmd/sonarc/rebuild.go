@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"sonarc/internal/index/cscope"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/index/rebuild"
-	"sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/index/cscope"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/rebuild"
+	"github.com/sonarc-dev/sonarc/internal/index/tags"
 )
 
 // rebuildJob is an index rebuild in progress. Only the UI goroutine touches it.

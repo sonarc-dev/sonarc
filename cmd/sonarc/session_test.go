@@ -8,9 +8,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/filetree"
-	"sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/filetree"
+	"github.com/sonarc-dev/sonarc/internal/term"
 )
 
 // restart makes a second editor on the same project and state directory, as
