@@ -112,3 +112,21 @@ func TestOpenFileReusesBuffers(t *testing.T) {
 		t.Errorf("reopening a file created a second buffer: %d -> %d", n, len(h.app.views))
 	}
 }
+
+// Dotfiles inside the project are shown relative to it like any other file;
+// only paths outside it stay absolute.
+func TestShortPath(t *testing.T) {
+	for _, c := range []struct{ path, want string }{
+		{"/p/src/a.c", "src/a.c"},
+		{"/p/.gitignore", ".gitignore"},
+		{"/p/.github/workflows/ci.yml", ".github/workflows/ci.yml"},
+		{"/p/..hidden", "..hidden"},
+		{"/p", "/p"},
+		{"/other/b.c", "/other/b.c"},
+		{"/pq/c.c", "/pq/c.c"},
+	} {
+		if got := shortPath("/p", c.path); got != c.want {
+			t.Errorf("shortPath(/p, %q) = %q, want %q", c.path, got, c.want)
+		}
+	}
+}
