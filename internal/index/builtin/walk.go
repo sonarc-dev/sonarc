@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"sonarc/internal/ignore"
+	"github.com/sonarc-dev/sonarc/internal/ignore"
 )
 
 // Language identifies how a file should be parsed.

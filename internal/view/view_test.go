@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 )
 
 func newView(s string) *View {

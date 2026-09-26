@@ -13,13 +13,13 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/search"
-	"sonarc/internal/syntax"
-	"sonarc/internal/term"
-	"sonarc/internal/text"
-	"sonarc/internal/vcs"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/search"
+	"github.com/sonarc-dev/sonarc/internal/syntax"
+	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/text"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // UI holds the screen and what is currently shown on it.

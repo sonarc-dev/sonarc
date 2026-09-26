@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 )
 
 func buf(s string) *buffer.Buffer { return buffer.FromBytes([]byte(s)) }

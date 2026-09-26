@@ -3,7 +3,7 @@ package builtin
 import (
 	"strings"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // Outline lists the definitions in one file, in order, from its current

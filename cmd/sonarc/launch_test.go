@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 )
 
 // mkProject builds a directory tree with a .git marker at its top.

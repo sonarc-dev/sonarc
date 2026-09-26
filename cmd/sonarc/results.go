@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 	"path/filepath"
-	"sonarc/internal/index/provider"
 
 	"github.com/gdamore/tcell/v2"
 )

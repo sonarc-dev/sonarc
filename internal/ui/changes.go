@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
 )
 
 // ChangeItem is one changed file in the sidebar's Changes section.

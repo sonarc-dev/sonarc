@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"sonarc/internal/index/cscope"
-	"sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/index/cscope"
+	"github.com/sonarc-dev/sonarc/internal/index/tags"
 )
 
 // The generic path against the real cscope and ctags. Skipped where they are not

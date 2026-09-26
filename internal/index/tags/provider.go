@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // candidateNames are the file names searched for, in the order ctags and vim

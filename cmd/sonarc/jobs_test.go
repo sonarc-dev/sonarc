@@ -10,7 +10,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // gatedIndex answers a reference query only when told to, so a test can hold a

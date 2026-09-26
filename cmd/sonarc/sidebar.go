@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 
 	"github.com/gdamore/tcell/v2"
 )

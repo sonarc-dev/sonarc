@@ -1,6 +1,6 @@
 package syntax
 
-import "sonarc/internal/buffer"
+import "github.com/sonarc-dev/sonarc/internal/buffer"
 
 // maxLookback bounds how far back the scanner will go to establish the state of
 // a line.

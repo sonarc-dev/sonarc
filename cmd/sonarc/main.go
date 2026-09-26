@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/term"
 )
 
 // version is overridden at build time with -ldflags "-X main.version=...".

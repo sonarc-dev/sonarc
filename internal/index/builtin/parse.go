@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // These patterns recognize definitions well enough to navigate by. They are

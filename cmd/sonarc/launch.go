@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/filetree"
+	"github.com/sonarc-dev/sonarc/internal/view"
 	"os"
 	"path/filepath"
-	"sonarc/internal/buffer"
-	"sonarc/internal/filetree"
-	"sonarc/internal/view"
 	"strconv"
 	"strings"
 )

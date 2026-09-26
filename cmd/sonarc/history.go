@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/sonarc-dev/sonarc/internal/buffer"
 	"path/filepath"
-	"sonarc/internal/buffer"
 )
 
 // jump records where the cursor was before a navigation command, so going to a

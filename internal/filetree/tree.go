@@ -15,7 +15,7 @@ import (
 	"sort"
 	"strings"
 
-	"sonarc/internal/ignore"
+	"github.com/sonarc-dev/sonarc/internal/ignore"
 )
 
 // Node is one entry in the tree: a file or a directory.

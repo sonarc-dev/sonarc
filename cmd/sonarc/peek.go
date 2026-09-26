@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // cmdPeekDefinition shows the definition of the symbol under the cursor on

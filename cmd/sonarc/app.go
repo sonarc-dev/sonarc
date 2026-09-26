@@ -7,16 +7,16 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/index/cscope"
-	"sonarc/internal/index/provider"
-	"sonarc/internal/index/tags"
-	"sonarc/internal/search"
-	"sonarc/internal/term"
-	"sonarc/internal/ui"
-	"sonarc/internal/vcs"
-	"sonarc/internal/view"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/index/cscope"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/search"
+	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/vcs"
+	"github.com/sonarc-dev/sonarc/internal/view"
 )
 
 // app is the running editor.

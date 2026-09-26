@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"sonarc/internal/proc"
+	"github.com/sonarc-dev/sonarc/internal/proc"
 )
 
 // Query is a cscope search type, matching the digits its line interface takes.

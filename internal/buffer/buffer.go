@@ -10,7 +10,7 @@
 package buffer
 
 import (
-	"sonarc/internal/text"
+	"github.com/sonarc-dev/sonarc/internal/text"
 )
 
 // minGap is the smallest gap opened when growing, so a run of line insertions

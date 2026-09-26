@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"sonarc/internal/index/provider"
+	"github.com/sonarc-dev/sonarc/internal/index/provider"
 )
 
 // stubIndex is a cheap indexed provider, standing in for cscope.

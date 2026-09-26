@@ -10,9 +10,9 @@ package view
 import (
 	"bytes"
 
-	"sonarc/internal/buffer"
-	"sonarc/internal/syntax"
-	"sonarc/internal/text"
+	"github.com/sonarc-dev/sonarc/internal/buffer"
+	"github.com/sonarc-dev/sonarc/internal/syntax"
+	"github.com/sonarc-dev/sonarc/internal/text"
 )
 
 // scrollMargin is how many lines of context are kept above and below the cursor

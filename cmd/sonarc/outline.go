@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"sonarc/internal/index/builtin"
-	"sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/index/builtin"
+	"github.com/sonarc-dev/sonarc/internal/ui"
 )
 
 // cmdOutline lists the functions, types and macros defined in the file on
