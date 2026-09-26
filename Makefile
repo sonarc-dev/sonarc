@@ -13,7 +13,7 @@ BUILD   := build
 GO      ?= go
 export CGO_ENABLED = 0
 
-.PHONY: all build linux release install test race cover vet fmt lint bench clean deploy doctor help
+.PHONY: all build linux release site install test race cover vet fmt lint bench clean deploy doctor help
 
 all: build
 
@@ -43,6 +43,15 @@ release:
 	done
 	cd $(BUILD) && $(SHA256) $(BIN)-* > checksums.txt
 	@cat $(BUILD)/checksums.txt
+
+## site: build the website into build/site as the Pages workflow does
+##   (docs from README.md and CONTRIBUTING.md, releases from GitHub)
+site:
+	@rm -rf $(BUILD)/site && mkdir -p $(BUILD)/site
+	cp -R site/. $(BUILD)/site/ && rm -rf $(BUILD)/site/gen
+	cp install.sh $(BUILD)/site/
+	cd site/gen && $(GO) run . -root ../.. -out ../../$(BUILD)/site
+	@echo "open $(BUILD)/site/index.html"
 
 ## install: install to GOPATH/bin for local use
 install:

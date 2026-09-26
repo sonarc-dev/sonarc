@@ -389,9 +389,10 @@ internal/
   index/tags          ctags files, binary-searched on disk
   index/builtin       the fallback indexer, git grep, outlines
   index/rebuild       regenerating cscope and tags safely
-site/                 the website, published to GitHub Pages
+site/                 the website, published to GitHub Pages (make site)
+  gen/                renders the docs and releases pages from the repo
 install.sh            the one-line installer, served beside the website
-.github/workflows/    releases on a v* tag; the website on changes to site/
+.github/workflows/    releases on a v* tag; the website on every change
 ```
 
 Tests sit beside the code they cover, named after it where they can be; the
