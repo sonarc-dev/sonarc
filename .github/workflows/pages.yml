@@ -1,11 +1,26 @@
-# Publishes the website in site/, with install.sh beside it, to GitHub Pages:
+# Builds and publishes the website to GitHub Pages:
 # https://sonarc-dev.github.io/sonarc/
+#
+# site/ is copied as is, with install.sh beside it; site/gen then renders the
+# docs from README.md and CONTRIBUTING.md and the releases page from GitHub.
+# It runs whenever any of those change and after every release, so the site
+# follows the repository.
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: ["site/**", "install.sh", ".github/workflows/pages.yml"]
+    paths:
+      - "site/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "install.sh"
+      - ".github/workflows/pages.yml"
+  release:
+    types: [published, edited, deleted]
+  workflow_run:
+    workflows: [release]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -25,10 +40,21 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - run: |
+        with:
+          ref: main
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: site/gen/go.mod
+          cache-dependency-path: site/gen/go.sum
+      - name: Build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
           mkdir _site
           cp -R site/. _site/
+          rm -rf _site/gen
           cp install.sh _site/install.sh
+          cd site/gen && go run . -root ../.. -out ../../_site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
