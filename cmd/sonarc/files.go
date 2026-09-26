@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/sonarc-dev/sonarc/internal/buffer"
 	"github.com/sonarc-dev/sonarc/internal/index/provider"
@@ -304,11 +305,13 @@ func (a *app) viewOf(path string) *view.View {
 	return nil
 }
 
-// shortPath renders a path relative to root where possible.
+// shortPath renders a path relative to root where possible. A path outside
+// root stays absolute; a dotfile such as .gitignore inside it does not.
 func shortPath(root, path string) string {
 	if root != "" {
 		if rel, err := filepath.Rel(root, path); err == nil && len(rel) < len(path) &&
-			!filepath.IsAbs(rel) && rel[0] != '.' {
+			!filepath.IsAbs(rel) && rel != "." && rel != ".." &&
+			!strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			return rel
 		}
 	}
