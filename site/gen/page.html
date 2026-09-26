@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{.Title}} · sonarc</title>
+<meta name="description" content="{{.Lede}}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313233A'/%3E%3Ccircle cx='8' cy='24' r='2.6' fill='%23E36BA5'/%3E%3Cpath d='M8 15a9 9 0 0 1 9 9M8 8a16 16 0 0 1 16 16' fill='none' stroke='%23DDE5EC' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Martian+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="{{.Base}}style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <a class="brand" href="{{.Base}}" aria-label="sonarc home">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <path class="arc" d="M8 15a9 9 0 0 1 9 9M8 7.5a16.5 16.5 0 0 1 16.5 16.5"></path>
+      <circle class="dot" cx="8" cy="24" r="2.8"></circle>
+    </svg>
+    <span>sonarc</span>
+  </a>
+  <nav class="nav" aria-label="Site">
+    <a class="opt" href="{{.Base}}docs/"{{if eq .Kind "docs"}} aria-current="page"{{end}}>Docs</a>
+    <a class="opt" href="{{.Base}}releases/"{{if eq .Kind "releases"}} aria-current="page"{{end}}>Releases</a>
+    <a href="https://github.com/{{.Repo}}">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<div class="page-head">
+  <div class="eyebrow">sonarc</div>
+  <h1>{{.Title}}</h1>
+  <p>{{.Lede}}</p>
+</div>
+
+{{if eq .Kind "docs"}}
+<div class="doc">
+  <details class="toc" id="toc">
+    <summary>Contents</summary>
+    <h2>On this page</h2>
+    <ol>
+      {{range .TOC}}<li><a href="#{{.ID}}">{{.Text}}</a>{{if .Sub}}
+        <ol>{{range .Sub}}<li><a href="#{{.ID}}">{{.Text}}</a></li>{{end}}</ol>{{end}}</li>
+      {{end}}
+    </ol>
+    <div class="other">
+      {{if .OtherDocs}}<a href="{{.Base}}docs/">Documentation</a>{{else}}<a href="{{.Base}}docs/contributing/">Contributing</a>{{end}}
+      <a href="{{.Base}}releases/">Releases</a>
+    </div>
+  </details>
+  <article class="prose">
+    {{.Body}}
+    <div class="doc-meta">
+      <span>Built from <a href="https://github.com/{{.Repo}}/blob/main/{{.Source}}">{{.Source}}</a>{{if .Commit}} at <a href="https://github.com/{{.Repo}}/commit/{{.Commit}}">{{.Commit}}</a>{{end}}</span>
+      <a href="https://github.com/{{.Repo}}/edit/main/{{.Source}}">Suggest an edit</a>
+    </div>
+  </article>
+</div>
+{{else}}
+<div class="rel-list">
+  {{range .Releases}}
+  <section class="rel" id="{{.Tag}}">
+    <div class="rel-side">
+      <a class="tag" href="{{.URL}}">{{.Tag}}</a>
+      {{if .Date}}<time datetime="{{.ISO}}">{{.Date}}</time>{{end}}
+      {{if .Latest}}<span class="badge">Latest</span>{{else if .Pre}}<span class="badge pre">Pre-release</span>{{end}}
+    </div>
+    <div class="prose">
+      {{if and .Name (ne .Name .Tag)}}<h3>{{.Name}}</h3>{{end}}
+      {{.Notes}}
+      {{if .Assets}}
+      <div class="assets">
+        {{range .Assets}}<div><a href="{{.URL}}">{{.Name}}</a><span>{{.Size}}</span></div>{{end}}
+      </div>
+      {{end}}
+    </div>
+  </section>
+  {{else}}
+  <p class="empty">No releases yet. Build from source in the meantime: <code>go install github.com/{{.Repo}}/cmd/sonarc@latest</code></p>
+  {{end}}
+</div>
+{{end}}
+</main>
+
+<footer>
+  <span>sonarc · MIT license · made for ssh + tmux</span>
+  <nav aria-label="Footer">
+    <a href="https://github.com/{{.Repo}}">GitHub</a>
+    <a href="{{.Base}}releases/">Releases</a>
+    <a href="{{.Base}}docs/">Docs</a>
+  </nav>
+</footer>
+
+</div>
+<script>
+(function () {
+  var toc = document.getElementById("toc");
+  if (toc && window.matchMedia("(min-width: 861px)").matches) toc.open = true;
+})();
+</script>
+</body>
+</html>
