@@ -13,7 +13,7 @@ BUILD   := build
 GO      ?= go
 export CGO_ENABLED = 0
 
-.PHONY: all build linux install test race cover vet fmt lint bench clean deploy doctor help
+.PHONY: all build linux release install test race cover vet fmt lint bench clean deploy doctor help
 
 all: build
 
@@ -29,6 +29,20 @@ linux:
 	@echo
 	@ls -lh $(BUILD)/$(BIN)-linux-* | awk '{print $$9, $$5}'
 	@file $(BUILD)/$(BIN)-linux-* 2>/dev/null | sed 's/, BuildID.*//' || true
+
+## release: static binaries for linux and macOS, amd64 and arm64, with
+##   checksums.txt - the files a GitHub release carries and install.sh fetches
+RELEASE_TARGETS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
+SHA256 := $(shell command -v sha256sum >/dev/null 2>&1 && echo sha256sum || echo 'shasum -a 256')
+release:
+	@rm -rf $(BUILD) && mkdir -p $(BUILD)
+	@for t in $(RELEASE_TARGETS); do \
+		os=$${t%/*}; arch=$${t#*/}; \
+		echo "building $(BIN)-$$os-$$arch"; \
+		GOOS=$$os GOARCH=$$arch $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o $(BUILD)/$(BIN)-$$os-$$arch $(PKG) || exit 1; \
+	done
+	cd $(BUILD) && $(SHA256) $(BIN)-* > checksums.txt
+	@cat $(BUILD)/checksums.txt
 
 ## install: install to GOPATH/bin for local use
 install:
