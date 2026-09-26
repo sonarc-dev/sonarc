@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>sonarc — a terminal editor for huge codebases over ssh</title>
+<meta name="description" content="sonarc is a modeless terminal code editor for Linux servers. One static binary, cscope and ctags built in, made for ssh and tmux. Goto-definition in 4.8 ms on a Linux kernel tree.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="sonarc">
+<meta property="og:description" content="A modeless terminal editor for navigating huge codebases over ssh. One static binary, cscope and ctags built in, made for tmux.">
+<meta property="og:url" content="https://sonarc-dev.github.io/sonarc/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313233A'/%3E%3Ccircle cx='8' cy='24' r='2.6' fill='%23E36BA5'/%3E%3Cpath d='M8 15a9 9 0 0 1 9 9M8 8a16 16 0 0 1 16 16' fill='none' stroke='%23DDE5EC' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,500&family=Martian+Mono:wght@400;500;700&display=swap">
+<style>
+:root {
+  --paper: #EEF1EC;
+  --paper-2: #E3E8E2;
+  --ink: #13233A;
+  --ink-2: #4A5A6B;
+  --rule: #C8D0CA;
+  --mark: #A8286A;
+  --shoal: #D8E5E6;
+  --term-bg: #15181D;
+  --term-fg: #D0D0D0;
+  --term-edge: #2A2F37;
+  --display: "Martian Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0D1520;
+    --paper-2: #131E2C;
+    --ink: #DDE5EC;
+    --ink-2: #97A6B6;
+    --rule: #26344A;
+    --mark: #E36BA5;
+    --shoal: #122436;
+    --term-bg: #0A0D12;
+    --term-edge: #26344A;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0D1520;
+  --paper-2: #131E2C;
+  --ink: #DDE5EC;
+  --ink-2: #97A6B6;
+  --rule: #26344A;
+  --mark: #E36BA5;
+  --shoal: #122436;
+  --term-bg: #0A0D12;
+  --term-edge: #26344A;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 17px/1.6 var(--body);
+  padding-inline: 20px;
+}
+a { color: inherit; text-decoration-color: var(--mark); text-underline-offset: 3px; }
+a:hover { color: var(--mark); }
+:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; border-radius: 3px; }
+.wrap { max-width: 1040px; margin-inline: auto; }
+/* Single-column grids may not grow past the page to fit a long command. */
+.hero, .soundings, section.why, section.features, section.keys, .install { grid-template-columns: minmax(0, 1fr); }
+
+/* Header */
+.top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding-block: 22px;
+}
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand span { font: 700 19px/1 var(--display); letter-spacing: -0.02em; }
+.logo { width: 30px; height: 30px; overflow: visible; }
+.logo .arc { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; }
+.logo .dot { fill: var(--mark); }
+.logo .ping { fill: none; stroke: var(--mark); stroke-width: 1.5; opacity: 0; transform-origin: 8px 24px; }
+@media (prefers-reduced-motion: no-preference) {
+  .logo .ping { animation: ping 2.6s ease-out 0.4s 2; }
+}
+@keyframes ping {
+  0% { opacity: 0.9; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+.nav { display: flex; gap: 22px; font: 500 14px/1 var(--display); }
+.nav a { text-decoration: none; color: var(--ink-2); }
+.nav a:hover { color: var(--mark); }
+
+/* Hero */
+.hero { padding-block: 56px 36px; display: grid; gap: 22px; }
+.eyebrow {
+  font: 500 12px/1 var(--display); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--mark);
+}
+h1 {
+  font: 700 clamp(34px, 5.6vw, 64px)/1.06 var(--display);
+  letter-spacing: -0.035em;
+  margin: 0;
+  max-width: 17ch;
+  text-wrap: balance;
+}
+.lede { font-size: 19px; color: var(--ink-2); max-width: 60ch; margin: 0; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+.install { display: grid; gap: 10px; max-width: 720px; margin-top: 8px; }
+.cmd {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--ink); color: var(--paper);
+  border-radius: 8px; padding: 6px 6px 6px 18px;
+}
+.cmd code {
+  flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap;
+  font: 500 14.5px/2.6 var(--mono);
+  scrollbar-width: none;
+}
+.cmd code::-webkit-scrollbar { display: none; }
+.cmd code .p { color: var(--mark); user-select: none; margin-right: 10px; }
+.copy {
+  flex: none; font: 500 13px/1 var(--display); cursor: pointer;
+  background: transparent; color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent);
+  border-radius: 6px; padding: 10px 14px;
+}
+.copy:hover { border-color: var(--mark); color: var(--mark); }
+.alt { font-size: 14.5px; color: var(--ink-2); margin: 0; }
+.alt code { font: 13.5px var(--mono); color: var(--ink); background: var(--paper-2); padding: 2px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+
+/* Terminal captures */
+figure { margin: 0; }
+.term {
+  background: var(--term-bg);
+  border: 1px solid var(--term-edge);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.term-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--term-edge);
+  font: 12px/1 var(--mono); color: #8a93a0;
+}
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a4150; display: block; }
+.term-bar b { font-weight: 400; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term-scroll { overflow-x: auto; }
+.t {
+  --t-bg: var(--term-bg); --t-fg: var(--term-fg);
+  margin: 0; padding: 14px 16px;
+  font: 12.4px/1.36 var(--mono);
+  color: var(--term-fg);
+  white-space: pre;
+  width: max-content;
+  font-variant-ligatures: none;
+}
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 12px; max-width: 70ch; }
+figcaption code { font: 13px var(--mono); }
+
+/* Soundings */
+.soundings {
+  margin-block: 64px 0;
+  border-block: 1px solid var(--rule);
+  padding-block: 34px;
+  display: grid; gap: 26px;
+}
+.soundings header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+h2 {
+  font: 700 clamp(22px, 2.8vw, 28px)/1.2 var(--display);
+  letter-spacing: -0.02em; margin: 0; text-wrap: balance;
+}
+.soundings header p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 52ch; }
+.depths { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.depth { padding: 4px 22px 4px 0; display: grid; gap: 6px; align-content: start; }
+.depth + .depth { padding-left: 22px; border-left: 1px dashed var(--rule); }
+.depth .n {
+  font: italic 500 clamp(34px, 4.4vw, 48px)/1 var(--body);
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.depth .n small { font-size: 0.45em; font-style: normal; font-weight: 500; margin-left: 4px; color: var(--ink-2); }
+.depth .l { font-size: 14.5px; color: var(--ink-2); line-height: 1.45; }
+
+/* Why */
+section.why { padding-block: 72px 0; display: grid; gap: 30px; }
+.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+.col h3 {
+  font: 700 15px/1.3 var(--display); margin: 0 0 10px; letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 10px;
+}
+.col h3::before { content: ""; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--mark); flex: none; }
+.col p { margin: 0; color: var(--ink-2); font-size: 16px; }
+kbd, .col code {
+  font: 500 13px var(--mono); color: var(--ink);
+  background: var(--paper-2); border: 1px solid var(--rule); border-bottom-width: 2px;
+  border-radius: 4px; padding: 1px 5px; white-space: nowrap;
+}
+.col code { border-bottom-width: 1px; }
+
+/* Features */
+section.features { padding-block: 80px 0; display: grid; gap: 30px; }
+.feat-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+.feat-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 36px; }
+.feat-list li { padding-block: 14px; border-top: 1px solid var(--rule); display: grid; gap: 3px; align-content: start; }
+.feat-list b { font-weight: 600; font-size: 16px; }
+.feat-list span { color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+
+/* Fit */
+section.fit { padding-block: 80px 0; }
+.fit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.fit-grid > div { padding: 26px 28px; display: grid; gap: 10px; align-content: start; }
+.fit-grid > div + div { border-left: 1px solid var(--rule); background: var(--paper-2); }
+.fit-grid h3 { font: 700 13px/1 var(--display); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; color: var(--mark); }
+.fit-grid ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15.5px; display: grid; gap: 6px; }
+
+/* Keys */
+section.keys { padding-block: 80px 0; display: grid; gap: 24px; }
+.keys header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+.keys header p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.keytab { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 44px; }
+.keytab div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-block: 11px; border-top: 1px dashed var(--rule); font-size: 15.5px; }
+.keytab div span { color: var(--ink-2); text-align: right; }
+
+/* Footer */
+footer {
+  margin-top: 96px; padding-block: 28px 40px; border-top: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px;
+  font: 13px/1.5 var(--display); color: var(--ink-2);
+}
+footer nav { display: flex; gap: 20px; }
+footer a { text-decoration: none; }
+
+@media (max-width: 860px) {
+  .depths { grid-template-columns: 1fr 1fr; row-gap: 26px; }
+  .depth:nth-child(3) { padding-left: 0; border-left: 0; }
+  .cols { grid-template-columns: 1fr; gap: 26px; }
+  .feat-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; padding-inline: 16px; }
+  .nav a.opt { display: none; }
+  .hero { padding-block: 32px 24px; }
+  .lede { font-size: 17px; }
+  .fit-grid { grid-template-columns: 1fr; }
+  .fit-grid > div + div { border-left: 0; border-top: 1px solid var(--rule); }
+  .keytab { grid-template-columns: 1fr; }
+  .feat-list { grid-template-columns: minmax(0, 1fr); }
+  .t { font-size: 11px; }
+}
+@media (max-width: 420px) {
+  .depths { grid-template-columns: 1fr; }
+  .depth + .depth { padding-left: 0; border-left: 0; }
+}
+.t .h0{color:#d7af5f;background:#444444;font-weight:700}
+.t .h1{color:#d0d0d0;background:#444444}
+.t .h2{color:#6c6c6c;background:var(--t-bg)}
+.t .h3{color:var(--t-fg);background:var(--t-bg)}
+.t .h4{color:#5fafff;background:var(--t-bg)}
+.t .h5{color:#d7875f;background:var(--t-bg)}
+.t .h6{color:#5fd7af;background:var(--t-bg)}
+.t .h7{color:#5f875f;background:var(--t-bg)}
+.t .h8{color:#d0d0d0;background:var(--t-bg)}
+.t .h9{color:#5f875f;background:#303030}
+.t .h10{color:var(--t-fg);background:#303030}
+.t .h11{color:#afd7af;background:var(--t-bg)}
+.t .h12{color:var(--t-fg);background:#005f87}
+.t .h13{color:#d7d7af;background:var(--t-bg)}
+.t .h14{color:#8a8a8a;background:#444444}
+.t .h15{color:#5f87d7;background:var(--t-bg)}
+.t .h16{color:#5faf5f;background:var(--t-bg)}
+.t .d0{color:#d7af5f;background:#444444;font-weight:700}
+.t .d1{color:#d0d0d0;background:#444444}
+.t .d2{color:#6c6c6c;background:var(--t-bg)}
+.t .d3{color:var(--t-fg);background:var(--t-bg)}
+.t .d4{color:#5fd7af;background:var(--t-bg)}
+.t .d5{color:#6c6c6c;background:#303030}
+.t .d6{color:#5faf5f;background:#303030}
+.t .d7{color:var(--t-fg);background:#303030}
+.t .d8{color:#5faf5f;background:var(--t-bg)}
+.t .d9{color:var(--t-fg);background:#005f87}
+.t .d10{color:#5f87d7;background:var(--t-bg)}
+.t .d11{color:#5f87d7;background:#303030}
+.t .d12{color:#8a8a8a;background:#444444}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <a class="brand" href="./" aria-label="sonarc home">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <circle class="ping" cx="8" cy="24" r="8"></circle>
+      <path class="arc" d="M8 15a9 9 0 0 1 9 9M8 7.5a16.5 16.5 0 0 1 16.5 16.5"></path>
+      <circle class="dot" cx="8" cy="24" r="2.8"></circle>
+    </svg>
+    <span>sonarc</span>
+  </a>
+  <nav class="nav" aria-label="Site">
+    <a class="opt" href="https://github.com/sonarc-dev/sonarc#readme">Docs</a>
+    <a class="opt" href="https://github.com/sonarc-dev/sonarc/releases">Releases</a>
+    <a href="https://github.com/sonarc-dev/sonarc">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero">
+  <div class="eyebrow">Terminal code editor · Linux &amp; macOS</div>
+  <h1>Find your way through huge codebases, over ssh.</h1>
+  <p class="lede">sonarc is a modeless editor for code on remote machines. <strong>Ping a symbol and get its definition, references and callers back</strong>, from cscope, ctags or its own indexer. One static 4&nbsp;MB binary, built to run inside tmux.</p>
+  <div class="install">
+    <div class="cmd">
+      <code id="install-cmd"><span class="p">$</span>curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh</code>
+      <button class="copy" id="copy-btn" type="button">Copy</button>
+    </div>
+    <p class="alt">No root needed; installs to <code>~/.local/bin</code>. Or with Go: <code>go install github.com/sonarc-dev/sonarc/cmd/sonarc@latest</code></p>
+  </div>
+</section>
+
+<figure>
+  <div class="term">
+    <div class="term-bar"><i></i><i></i><i></i><b>ssh build-box · tmux · sonarc .</b></div>
+    <div class="term-scroll"><pre class="t" aria-label="sonarc showing the file tree, source code and 7 references to Recover"><span class="h0"> sonarc</span><span class="h1">                 </span><span class="h2">│497</span><span class="h3"> </span><span class="h4">const</span><span class="h3"> prevSuffix = </span><span class="h5">&#34;.sonarc-prev&#34;</span><span class="h3">                                                          </span>
+<span class="h6">   ▸ cmd                </span><span class="h2">│498</span><span class="h3">                                                                                            </span>
+<span class="h6">   ▾ internal           </span><span class="h2">│499</span><span class="h3"> </span><span class="h7">// legacyPrevSuffix is what the editor named these copies before it was</span><span class="h3">                    </span>
+<span class="h6">     ▸ buffer           </span><span class="h2">│</span><span class="h8">500</span><span class="h3"> </span><span class="h9">// renamed; Recover still restores them.</span><span class="h10">                                                   </span>
+<span class="h6">     ▸ filetree         </span><span class="h2">│501</span><span class="h3"> </span><span class="h4">const</span><span class="h3"> legacyPrevSuffix = </span><span class="h5">&#34;.keditor-prev&#34;</span><span class="h3">                                                   </span>
+<span class="h6">     ▸ ignore           </span><span class="h2">│502</span><span class="h3">                                                                                            </span>
+<span class="h6">     ▾ index            </span><span class="h2">│503</span><span class="h3"> </span><span class="h7">// linkAbove is the size from which a file is preserved by hard link instead of</span><span class="h3">            </span>
+<span class="h6">       ▸ builtin        </span><span class="h2">│504</span><span class="h3"> </span><span class="h7">// by copy. Index files are either a few megabytes (file lists) or a gigabyte.</span><span class="h3">             </span>
+<span class="h6">       ▸ cscope         </span><span class="h2">│505</span><span class="h3"> </span><span class="h4">var</span><span class="h3"> linkAbove </span><span class="h6">int64</span><span class="h3"> = </span><span class="h11">64</span><span class="h3"> &lt;&lt; </span><span class="h11">20</span><span class="h3">                                                             </span>
+<span class="h6">       ▸ provider       </span><span class="h2">│506</span><span class="h3">                                                                                            </span>
+<span class="h6">       ▾ rebuild        </span><span class="h2">│507</span><span class="h3"> </span><span class="h7">// Recover finishes the job of a rebuild that was killed before it could roll</span><span class="h3">              </span>
+<span class="h3">           real_test.go </span><span class="h2">│508</span><span class="h3"> </span><span class="h7">// back or commit, such as when the editor itself was killed. A leftover</span><span class="h3">                   </span>
+<span class="h12">           rebuild.go   </span><span class="h2">│509</span><span class="h3"> </span><span class="h7">// NAME.sonarc-prev is the last good copy: it is restored if NAME is missing</span><span class="h3">               </span>
+<span class="h3">           rebuild_test.</span><span class="h2">│510</span><span class="h3"> </span><span class="h7">// and discarded otherwise, since NAME is then a completed build. It is safe</span><span class="h3">               </span>
+<span class="h6">       ▸ tags           </span><span class="h2">│511</span><span class="h3"> </span><span class="h7">// to call at any time, and Run&#39;s guard calls it before every in-place build.</span><span class="h3">              </span>
+<span class="h6">     ▸ proc             </span><span class="h2">│512</span><span class="h3"> </span><span class="h4">func</span><span class="h3"> </span><span class="h13">Recover</span><span class="h3">(root </span><span class="h6">string</span><span class="h3">, names ...</span><span class="h6">string</span><span class="h3">) {                                               </span>
+<span class="h6">     ▸ search           </span><span class="h2">│513</span><span class="h3">     </span><span class="h4">for</span><span class="h3"> _, n := </span><span class="h4">range</span><span class="h3"> names {                                                              </span>
+<span class="h6">     ▸ syntax           </span><span class="h2">│514</span><span class="h3">         live := filepath.</span><span class="h13">Join</span><span class="h3">(root, n)                                                     </span>
+<span class="h6">     ▸ term             </span><span class="h2">│515</span><span class="h3">         </span><span class="h4">for</span><span class="h3"> _, prev := </span><span class="h4">range</span><span class="h3"> []</span><span class="h6">string</span><span class="h3">{live + prevSuffix, live + legacyPrevSuffix} {        </span>
+<span class="h6">     ▸ text             </span><span class="h2">│516</span><span class="h3">             </span><span class="h4">if</span><span class="h3"> !</span><span class="h13">exists</span><span class="h3">(prev) {                                                             </span>
+<span class="h6">     ▸ ui               </span><span class="h2">│517</span><span class="h3">                 </span><span class="h4">continue</span><span class="h3">                                                                   </span>
+<span class="h6">     ▸ vcs              </span><span class="h2">│518</span><span class="h3">             }                                                                              </span>
+<span class="h6">     ▸ view             </span><span class="h2">│</span><span class="h0"> references to Recover — 7 results</span><span class="h1">                      </span><span class="h14">Enter open   n/p next/prev   Esc close </span>
+<span class="h3">     .gitignore         </span><span class="h2">│</span><span class="h12"> internal/index/rebuild/rebuild.go:500  // renamed; Recover still restores them.               </span>
+<span class="h3">     LICENSE            </span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild.go:507  // Recover finishes the job of a rebuild that was kille</span>
+<span class="h3">     Makefile          </span><span class="h15">M</span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild.go:512  func Recover(root string, names ...string) {           </span>
+<span class="h0"> ▾ CHANGES  3</span><span class="h1">           </span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild.go:531  Recover(root, names...)                                </span>
+<span class="h3">  </span><span class="h16">?</span><span class="h3"> .github             </span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild_test.go:232  Recover(root, &#34;tags&#34;)                             </span>
+<span class="h3">  </span><span class="h15">M</span><span class="h3"> Makefile            </span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild_test.go:243  Recover(root, &#34;tags&#34;)                             </span>
+<span class="h3">  </span><span class="h16">?</span><span class="h3"> install.sh          </span><span class="h2">│</span><span class="h3"> internal/index/rebuild/rebuild_test.go:407  Recover(root, &#34;tags&#34;)                             </span>
+<span class="h1"> rebuild.go                                                                 Ln 500, Col 1   go   Tab:4   LF   634 lines </span>
+<span class="h8">7 result(s) — builtin 3ms — Enter opens, Esc closes</span><span class="h3">                                                                     </span></pre></div>
+  </div>
+  <figcaption>A real sonarc screen at 120×32, rendered to text: find references (<kbd>F7</kbd>) on <code>Recover</code> in sonarc's own source, with the file tree and the list of files changed since the last commit.</figcaption>
+</figure>
+
+<section class="soundings" aria-labelledby="soundings-h">
+  <header>
+    <h2 id="soundings-h">Soundings from a Linux kernel tree</h2>
+    <p>Linux 7.2 source: 5.5&nbsp;GB, 64,525 C and header files. A 4-core Ubuntu box with 3.7&nbsp;GB of RAM, over ssh inside tmux 3.4, with real cscope and a real tags file.</p>
+  </header>
+  <div class="depths">
+    <div class="depth"><div class="n">4.8<small>ms</small></div><div class="l">per goto-definition</div></div>
+    <div class="depth"><div class="n">8<small>MB</small></div><div class="l">of memory to search a 1.1&nbsp;GB tags file</div></div>
+    <div class="depth"><div class="n">0.82<small>s</small></div><div class="l">to find references across the whole kernel</div></div>
+    <div class="depth"><div class="n">31<small>MB</small></div><div class="l">for the editor, with the whole tree open</div></div>
+  </div>
+</section>
+
+<section class="why" aria-labelledby="why-h">
+  <h2 id="why-h">Why sonarc</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>No modes</h3>
+      <p>Typing inserts text. <kbd>Ctrl+S</kbd> saves and <kbd>Ctrl+Z</kbd> undoes. There is nothing to escape from and no <code>:wq</code>, so it works the way you already expect an editor to.</p>
+    </div>
+    <div class="col">
+      <h3>Made for tmux</h3>
+      <p>tmux and screen drop <kbd>Ctrl+Shift</kbd> keys, so no command needs one: a <kbd>Ctrl+K</kbd> chord reaches everything. <code>sonarc -doctor</code> reads your live tmux settings and says what to change.</p>
+    </div>
+    <div class="col">
+      <h3>Scales to a kernel</h3>
+      <p>A gigabyte tags file is binary-searched on disk instead of loaded. One cscope process stays resident, and the file tree reads a directory only when you open it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="features" aria-labelledby="feat-h">
+  <h2 id="feat-h">What it does</h2>
+  <div class="feat-grid">
+    <ul class="feat-list">
+      <li><b>Code navigation</b><span>Go to definition, peek, find references, callers, callees, assignments and includers, with a jump-back stack.</span></li>
+      <li><b>Project search</b><span>Text and regex search across the tree through <code>git grep</code>, and symbol search by name.</span></li>
+      <li><b>Changes and diffs</b><span>The files changed since the last commit sit under the tree. Select one to read its diff in place.</span></li>
+      <li><b>Sessions that survive ssh</b><span>Open files, cursors and folders are saved every few seconds, so a dropped connection loses nothing.</span></li>
+      <li><b>Works with nothing installed</b><span>Without cscope or ctags, a built-in indexer still covers C and C++, Go and Python.</span></li>
+      <li><b>Mouse, themes, reload</b><span>Clicks and the wheel work through tmux, five themes, and files changed on disk are noticed within two seconds.</span></li>
+    </ul>
+    <figure>
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><b>F8 · diff against the last commit</b></div>
+        <div class="term-scroll"><pre class="t" aria-label="sonarc showing a diff of the Makefile, 15 lines added"><span class="d0"> sonarc</span><span class="d1">                 </span><span class="d2">│          ⋯</span><span class="d3">                                                                                    </span>
+<span class="d4">   ▸ cmd                </span><span class="d2">│  29   29 </span><span class="d3">      @echo                                                                          </span>
+<span class="d4">   ▾ internal           </span><span class="d2">│  30   30 </span><span class="d3">      @ls -lh $(BUILD)/$(BIN)-linux-* | awk &#39;{print $$9, $$5}&#39;                       </span>
+<span class="d4">     ▸ buffer           </span><span class="d2">│  31   31 </span><span class="d3">      @file $(BUILD)/$(BIN)-linux-* 2&gt;/dev/null | sed &#39;s/, BuildID.*//&#39; || true      </span>
+<span class="d4">     ▸ filetree         </span><span class="d2">│</span><span class="d5">       32 </span><span class="d6">+ </span><span class="d7">                                                                                   </span>
+<span class="d4">     ▸ ignore           </span><span class="d2">│       33 </span><span class="d8">+ ## release: static binaries for linux and macOS, amd64 and arm64, with</span><span class="d3">             </span>
+<span class="d4">     ▾ index            </span><span class="d2">│       34 </span><span class="d8">+ ##   checksums.txt - the files a GitHub release carries and install.sh fetches</span><span class="d3">     </span>
+<span class="d4">       ▸ builtin        </span><span class="d2">│       35 </span><span class="d8">+ RELEASE_TARGETS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64</span><span class="d3">               </span>
+<span class="d4">       ▸ cscope         </span><span class="d2">│       36 </span><span class="d8">+ SHA256 := $(shell command -v sha256sum &gt;/dev/null 2&gt;&amp;1 &amp;&amp; echo sha256sum || echo &#39;s</span>
+<span class="d4">       ▸ provider       </span><span class="d2">│       37 </span><span class="d8">+ release:</span><span class="d3">                                                                           </span>
+<span class="d4">       ▾ rebuild        </span><span class="d2">│       38 </span><span class="d8">+     @rm -rf $(BUILD) &amp;&amp; mkdir -p $(BUILD)</span><span class="d3">                                          </span>
+<span class="d3">           real_test.go </span><span class="d2">│       39 </span><span class="d8">+     @for t in $(RELEASE_TARGETS); do \</span><span class="d3">                                             </span>
+<span class="d9">           rebuild.go   </span><span class="d2">│       40 </span><span class="d8">+         os=$${t%/*}; arch=$${t#*/}; \</span><span class="d3">                                              </span>
+<span class="d3">           rebuild_test.</span><span class="d2">│       41 </span><span class="d8">+         echo &#34;building $(BIN)-$$os-$$arch&#34;; \</span><span class="d3">                                      </span>
+<span class="d4">       ▸ tags           </span><span class="d2">│       42 </span><span class="d8">+         GOOS=$$os GOARCH=$$arch $(GO) build -trimpath -ldflags &#39;$(LDFLAGS)&#39; -o $(BU</span>
+<span class="d4">     ▸ proc             </span><span class="d2">│       43 </span><span class="d8">+     done</span><span class="d3">                                                                           </span>
+<span class="d4">     ▸ search           </span><span class="d2">│       44 </span><span class="d8">+     cd $(BUILD) &amp;&amp; $(SHA256) $(BIN)-* &gt; checksums.txt</span><span class="d3">                              </span>
+<span class="d4">     ▸ syntax           </span><span class="d2">│       45 </span><span class="d8">+     @cat $(BUILD)/checksums.txt</span><span class="d3">                                                    </span>
+<span class="d4">     ▸ term             </span><span class="d2">│  32   46 </span><span class="d3">                                                                                     </span>
+<span class="d4">     ▸ text             </span><span class="d2">│  33   47 </span><span class="d3">  ## install: install to GOPATH/bin for local use                                    </span>
+<span class="d4">     ▸ ui               </span><span class="d2">│  34   48 </span><span class="d3">  install:                                                                           </span>
+<span class="d4">     ▸ vcs              </span><span class="d2">│          ⋯</span><span class="d3">                                                                                    </span>
+<span class="d4">     ▸ view             </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d3">     .gitignore         </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d3">     LICENSE            </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d3">     Makefile          </span><span class="d10">M</span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d0"> ▾ CHANGES  3</span><span class="d1">           </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d3">  </span><span class="d8">?</span><span class="d3"> .github             </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d7">  </span><span class="d11">M</span><span class="d7"> Makefile            </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d3">  </span><span class="d8">?</span><span class="d3"> install.sh          </span><span class="d2">│</span><span class="d3">                                                                                               </span>
+<span class="d1"> </span><span class="d0">diff  Makefile</span><span class="d1">   +15 −1                                            </span><span class="d12">Enter go to line   n/p next/prev change   Esc close </span>
+<span class="d12">^S save  ^Q quit  ^F find  ^O open  ^E tree  ^] def  ^K r refs  F1 help</span><span class="d3">                                                 </span></pre></div>
+      </div>
+      <figcaption>The diff view: both line numbers, with <kbd>n</kbd> and <kbd>p</kbd> to step through changes and <kbd>Enter</kbd> to open the file at that line.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="fit" aria-labelledby="fit-h">
+  <h2 id="fit-h" style="margin-bottom:24px">Is it for you?</h2>
+  <div class="fit-grid">
+    <div>
+      <h3>A good fit</h3>
+      <ul>
+        <li>You read and edit C on remote Linux machines: kernels, drivers, firmware, embedded.</li>
+        <li>You live in ssh and tmux and want an editor that behaves there.</li>
+        <li>You can't install much: no root, old glibc, Alpine, air-gapped boxes.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Not yet, if you need</h3>
+      <ul>
+        <li>Language servers, plugins or scripting.</li>
+        <li>Vim-style modal editing.</li>
+        <li>Split panes or rebindable keys. Both are planned.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="keys" aria-labelledby="keys-h">
+  <header>
+    <h2 id="keys-h">The keys you need on day one</h2>
+    <p><kbd>F1</kbd> lists every key your terminal can actually send.</p>
+  </header>
+  <div class="keytab">
+    <div><kbd>Ctrl+P</kbd><span>open a file by name</span></div>
+    <div><kbd>Ctrl+]</kbd><span>go to definition</span></div>
+    <div><kbd>F7</kbd><span>find references</span></div>
+    <div><kbd>Ctrl+T</kbd><span>jump back</span></div>
+    <div><kbd>Ctrl+K f</kbd><span>search the project</span></div>
+    <div><kbd>Ctrl+E</kbd><span>file tree</span></div>
+    <div><kbd>F8</kbd><span>diff against the last commit</span></div>
+    <div><kbd>Ctrl+S</kbd><span>save</span></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>sonarc · MIT license · made for ssh + tmux</span>
+  <nav aria-label="Footer">
+    <a href="https://github.com/sonarc-dev/sonarc">GitHub</a>
+    <a href="https://github.com/sonarc-dev/sonarc/releases">Releases</a>
+    <a href="https://github.com/sonarc-dev/sonarc/issues">Issues</a>
+  </nav>
+</footer>
+
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("copy-btn");
+  var cmd = "curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh";
+  function done(label) {
+    btn.textContent = label;
+    setTimeout(function () { btn.textContent = "Copy"; }, 1600);
+  }
+  function selectIt() {
+    var el = document.getElementById("install-cmd");
+    var r = document.createRange();
+    r.selectNodeContents(el);
+    var s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    done("Selected");
+  }
+  btn.addEventListener("click", function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).then(function () { done("Copied"); }, selectIt);
+    } else {
+      selectIt();
+    }
+  });
+})();
+</script>
+</body>
+</html>
