@@ -7,10 +7,12 @@ escape from and no `:wq`. It ships as a single static binary with no runtime
 dependencies, and it treats **cscope** and **ctags** as first-class features
 rather than plugins.
 
+```sh
+curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh
+sonarc path/to/file.c
 ```
-go build ./cmd/sonarc     # or: make build
-./sonarc path/to/file.c
-```
+
+Website: <https://sonarc-dev.github.io/sonarc/>
 
 ## Why it exists
 
@@ -33,9 +35,30 @@ honest about what a terminal inside tmux can actually do.
 
 ## Install
 
+On Linux or macOS, amd64 or arm64:
+
+```sh
+curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh
+```
+
+The script downloads the latest release for your machine, checks it against
+the release's `checksums.txt`, and installs it to `~/.local/bin` without root.
+`SONARC_INSTALL_DIR` changes where, and `SONARC_VERSION=v0.1.0` picks a
+release. Binaries are also on the
+[releases page](https://github.com/sonarc-dev/sonarc/releases).
+
+With Go 1.24 or later:
+
+```sh
+go install github.com/sonarc-dev/sonarc/cmd/sonarc@latest
+```
+
+From a checkout:
+
 ```sh
 make build                     # build for this machine
 make linux                     # static binaries for linux/amd64 and arm64
+make release                   # linux and macOS, amd64 and arm64, with checksums
 make deploy HOST=myserver      # detects the remote arch and scp's the right one
 ```
 
@@ -366,6 +389,9 @@ internal/
   index/tags          ctags files, binary-searched on disk
   index/builtin       the fallback indexer, git grep, outlines
   index/rebuild       regenerating cscope and tags safely
+site/                 the website, published to GitHub Pages
+install.sh            the one-line installer, served beside the website
+.github/workflows/    releases on a v* tag; the website on changes to site/
 ```
 
 Tests sit beside the code they cover, named after it where they can be; the
