@@ -147,11 +147,16 @@ func projectRoot(path string) string {
 func projectRootFrom(dir string) string {
 	strong := []string{".git", ".hg", ".svn", "go.mod", "cscope.out", "tags"}
 	weak := []string{"Makefile", "CMakeLists.txt"}
+	// A module file or an index counts only as a file: a tags/ directory of
+	// blog tags, or this editor's own internal/index/tags package, is not
+	// a ctags index. .git may be a file (a worktree or submodule) or a
+	// directory, so the VCS markers count either way.
+	fileOnly := map[string]bool{"go.mod": true, "cscope.out": true, "tags": true}
 
 	fallback := ""
 	for d := dir; ; {
 		for _, m := range strong {
-			if _, err := os.Stat(filepath.Join(d, m)); err == nil {
+			if fi, err := os.Stat(filepath.Join(d, m)); err == nil && !(fileOnly[m] && fi.IsDir()) {
 				return d
 			}
 		}

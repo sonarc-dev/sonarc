@@ -278,3 +278,29 @@ func TestProjectRootFallsBackToMakefile(t *testing.T) {
 		t.Errorf("projectRoot = %q, want %q", got, want)
 	}
 }
+
+// A directory named tags is not a ctags index. sonarc's own source has one,
+// internal/index/tags, which rooted the project at internal/index for every
+// file opened beneath it.
+func TestProjectRootIgnoresDirectoriesNamedLikeIndexes(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module m\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sub := filepath.Join(root, "internal", "index")
+	for _, d := range []string{"tags", "cscope.out", "go.mod"} {
+		if err := os.MkdirAll(filepath.Join(sub, d), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	file := filepath.Join(sub, "rebuild", "rebuild.go")
+	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte("package rebuild\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := projectRoot(file); got != root {
+		t.Errorf("projectRoot = %q, want %q", got, root)
+	}
+}
