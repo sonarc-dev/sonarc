@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -154,13 +155,25 @@ func TestAdvertisedBindingsExist(t *testing.T) {
 	}
 }
 
-// Every shortcut the README's key tables document must be bound to something.
-// Ctrl+D once dropped out of the key map while the README went on promising
+// Every shortcut the docs' key tables document must be bound to something.
+// Ctrl+D once dropped out of the key map while the docs went on promising
 // it, and nothing noticed; this is what notices now.
-func TestREADMEKeysAreBound(t *testing.T) {
-	data, err := os.ReadFile("../../README.md")
-	if err != nil {
-		t.Fatal(err)
+func TestDocumentedKeysAreBound(t *testing.T) {
+	// Every docs page with key tables; vim.md's first column is vim's keys.
+	pages, err := filepath.Glob("../../docs/*.md")
+	if err != nil || len(pages) == 0 {
+		t.Fatalf("no docs pages found: %v", err)
+	}
+	var data []byte
+	for _, p := range pages {
+		if filepath.Base(p) == "vim.md" {
+			continue
+		}
+		b, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data = append(data, b...)
 	}
 	bound := map[string]bool{}
 	for spec := range keymap {
@@ -189,11 +202,11 @@ func TestREADMEKeysAreBound(t *testing.T) {
 			}
 			checked++
 			if !bound[k] {
-				t.Errorf("README documents %s, but nothing is bound to it", m[1])
+				t.Errorf("the docs document %s, but nothing is bound to it", m[1])
 			}
 		}
 	}
 	if checked < 30 {
-		t.Errorf("only %d shortcuts found in the README tables; is the parser still reading them?", checked)
+		t.Errorf("only %d shortcuts found in the docs tables; is the parser still reading them?", checked)
 	}
 }
