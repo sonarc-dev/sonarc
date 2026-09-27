@@ -14,6 +14,7 @@ section() {
 	title="$1"
 	pattern="$2"
 	lines="$(git log --no-merges --reverse --format='%s' "$range" | grep -E "$pattern" |
+		grep -vE '^[a-z]+(\([^)]*\))?!?: init$' |
 		sed -E 's/^[a-z]+(\([^)]*\))?!?: //' | sed 's/^/- /' || true)"
 	if [ -n "$lines" ]; then
 		printf '### %s\n\n%s\n\n' "$title" "$lines"
