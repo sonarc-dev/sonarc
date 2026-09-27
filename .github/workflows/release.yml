@@ -57,3 +57,20 @@ jobs:
           else
             gh release create "$TAG" build/* --title "$TAG" --notes-file notes.md
           fi
+      - name: Update the Homebrew tap
+        # Runs once the HOMEBREW_TAP_TOKEN secret exists: a token that can
+        # push to sonarc-dev/homebrew-tap. Then:
+        #   brew install sonarc-dev/tap/sonarc
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        if: env.TAP_TOKEN != '' && !contains(env.TAG, '-')
+        run: |
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/sonarc-dev/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          .github/scripts/homebrew-formula.sh "$TAG" build/checksums.txt > tap/Formula/sonarc.rb
+          cd tap
+          git config user.name "sonarc release"
+          git config user.email "sonarc-release@users.noreply.github.com"
+          git add Formula/sonarc.rb
+          git diff --cached --quiet || git commit -m "sonarc ${TAG#v}"
+          git push
