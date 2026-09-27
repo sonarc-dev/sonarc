@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -301,6 +302,23 @@ func TestFraming(t *testing.T) {
 	}
 	if _, err := readMessage(bufio.NewReader(strings.NewReader("Content-Length: 99999999999\r\n\r\n"))); err == nil {
 		t.Error("an absurd Content-Length should be refused")
+	}
+	// Header names are case-insensitive, other headers are skipped, and a
+	// server that ends lines with a bare LF is still understood.
+	two := "content-length: 2\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n{}" +
+		"Content-Length:14\n\n{\"method\":\"y\"}"
+	r := bufio.NewReader(strings.NewReader(two))
+	if m, err := readMessage(r); err != nil || m.Method != "" {
+		t.Errorf("first message = %+v, %v", m, err)
+	}
+	if m, err := readMessage(r); err != nil || m.Method != "y" {
+		t.Errorf("second message = %+v, %v", m, err)
+	}
+	if _, err := readMessage(r); err != io.EOF {
+		t.Errorf("at the end: %v, want io.EOF", err)
+	}
+	if _, err := readMessage(bufio.NewReader(strings.NewReader("Content-Type: x\r\n\r\n{}"))); err == nil {
+		t.Error("a message without Content-Length should be refused")
 	}
 }
 

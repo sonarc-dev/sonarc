@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/textproto"
 	"strconv"
 	"strings"
 )
@@ -41,16 +40,30 @@ func (e *rpcError) Error() string { return fmt.Sprintf("%s (code %d)", e.Message
 // large tree is a few megabytes; anything past this is a broken stream.
 const maxMessage = 64 << 20
 
-// readMessage reads one Content-Length framed message.
+// readMessage reads one Content-Length framed message: header lines, each
+// ending in CRLF, then a blank line, then the body. Content-Length is the one
+// header that matters; others, such as Content-Type, are skipped.
 func readMessage(r *bufio.Reader) (*message, error) {
-	tp := textproto.NewReader(r)
-	hdr, err := tp.ReadMIMEHeader()
-	if err != nil {
-		return nil, err
+	length := ""
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			if err == io.EOF && line != "" {
+				err = io.ErrUnexpectedEOF
+			}
+			return nil, err
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			break
+		}
+		if name, value, ok := strings.Cut(line, ":"); ok && strings.EqualFold(strings.TrimSpace(name), "Content-Length") {
+			length = strings.TrimSpace(value)
+		}
 	}
-	n, err := strconv.Atoi(strings.TrimSpace(hdr.Get("Content-Length")))
+	n, err := strconv.Atoi(length)
 	if err != nil || n < 0 || n > maxMessage {
-		return nil, fmt.Errorf("bad Content-Length %q", hdr.Get("Content-Length"))
+		return nil, fmt.Errorf("bad Content-Length %q", length)
 	}
 	body := make([]byte, n)
 	if _, err := io.ReadFull(r, body); err != nil {
