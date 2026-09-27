@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/sonarc-dev/sonarc/internal/term"
+	"github.com/sonarc-dev/sonarc/internal/update"
 )
 
 // version is overridden at build time with -ldflags "-X main.version=...".
@@ -22,6 +23,7 @@ func main() {
 		doctor      = flag.Bool("doctor", false, "report terminal capabilities and suggest fixes")
 		lineNo      = flag.Int("line", 0, "put the cursor on this line")
 		traceInput  = flag.String("trace-input", "", "log terminal input and the events made of it to `file`")
+		doUpdate    = flag.Bool("update", false, "replace this binary with the latest release")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -33,6 +35,13 @@ func main() {
 	case *doctor:
 		term.Doctor(os.Stdout)
 		return
+	case *doUpdate:
+		exe, err := executable()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "sonarc: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(runUpdate(os.Stdout, update.Source{}, exe))
 	}
 
 	if *traceInput != "" {
@@ -67,6 +76,7 @@ options:
   -trace-input FILE
               log what the terminal sends, to diagnose keys or clicks that
               do nothing
+  -update     replace this binary with the latest release
   -version    print version and exit
 
 Inside the editor, press F1 for the keys that work on this terminal.
