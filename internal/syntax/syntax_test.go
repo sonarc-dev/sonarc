@@ -400,3 +400,19 @@ func BenchmarkHighlightViewport(b *testing.B) {
 		}
 	}
 }
+
+// Two highlighters on one buffer, as two panes on one file have: an edit
+// through one must recolor the other, which was never told about it directly.
+func TestHighlighterSeesEditsMadeElsewhere(t *testing.T) {
+	b := buffer.FromBytes([]byte("package p\n\nvar a = 1\nvar b = 2\n"))
+	lang := Detect("x.go")
+	mine, other := New(lang), New(lang)
+	if cl := ClassAt(other.Tokens(b, 3, nil), 0); cl == ClassComment {
+		t.Fatal("line 4 starts as a comment before any edit")
+	}
+	b.Insert(buffer.Pos{Line: 1, Col: 0}, []byte("/*"))
+	mine.Invalidate(1) // only the editing side is told
+	if cl := ClassAt(other.Tokens(b, 3, nil), 0); cl != ClassComment {
+		t.Errorf("the other highlighter still colors line 4 as %v after /* opened above it", cl)
+	}
+}

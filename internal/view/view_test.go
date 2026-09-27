@@ -423,3 +423,39 @@ func TestSelectLineClampsOutOfRange(t *testing.T) {
 		t.Errorf("SelectLine(-5) = %q, want the first line", got)
 	}
 }
+
+// Two views of one buffer, as split panes on one file: typing above the
+// second view's cursor must not leave it on different text.
+func TestMirrorFollowsEditsMadeInTheOtherView(t *testing.T) {
+	b := buffer.FromBytes([]byte("one\ntwo\nthree\nfour"))
+	a := New(b)
+	m := a.Mirror()
+	m.SetCursor(buffer.Pos{Line: 2, Col: 2}) // "th|ree"
+	m.Top = 1
+
+	a.SetCursor(buffer.Pos{Line: 0, Col: 3})
+	a.Insert([]byte("\nnew line"))
+	a.SetCursor(buffer.Pos{Line: 3, Col: 0})
+	a.Insert([]byte(">> ")) // on m's line, before its cursor
+	a.MarkSeen()
+
+	m.Sync()
+	if got := string(b.Line(m.Head.Line)); got != ">> three" || m.Head.Col != 5 {
+		t.Errorf("mirror cursor on %q col %d, want %q col 5", got, m.Head.Col, ">> three")
+	}
+	if m.Top != 2 {
+		t.Errorf("mirror scroll = %d, want 2 (it followed \"two\")", m.Top)
+	}
+
+	// Deleting the text under the mirror's cursor puts it where the deletion
+	// began, not past the end of a line.
+	a.SetCursor(buffer.Pos{Line: 2, Col: 0})
+	a.Anchor = buffer.Pos{Line: 4, Col: 0}
+	a.Insert(nil)
+	a.deleteSelection()
+	a.MarkSeen()
+	m.Sync()
+	if m.Head != (buffer.Pos{Line: 2, Col: 0}) {
+		t.Errorf("mirror cursor = %v after its text was deleted, want 2:0", m.Head)
+	}
+}

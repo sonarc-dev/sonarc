@@ -19,6 +19,7 @@ type Highlighter struct {
 	lang   *Language
 	states []State // states[i] is the state entering line i
 	valid  int     // states[0:valid] are known correct
+	seen   uint64  // the buffer version the cache was last brought up to
 }
 
 // New returns a highlighter for a language. A nil language is valid and
@@ -88,6 +89,25 @@ func (h *Highlighter) ensure(b *buffer.Buffer, line int) {
 	}
 }
 
+// catchUp invalidates what edits made elsewhere changed. The view that makes
+// an edit invalidates its own highlighter at once, but a second pane on the
+// same file only learns of it here, from the buffer's record of recent edits.
+func (h *Highlighter) catchUp(b *buffer.Buffer) {
+	v := b.Version()
+	if v == h.seen {
+		return
+	}
+	low := 0
+	if edits, ok := b.EditsSince(h.seen); ok && len(edits) > 0 {
+		low = edits[0].From.Line
+		for _, e := range edits[1:] {
+			low = min(low, e.From.Line)
+		}
+	}
+	h.Invalidate(low)
+	h.seen = v
+}
+
 // grow makes room for n cached states.
 func (h *Highlighter) grow(n int) {
 	for len(h.states) < n {
@@ -101,6 +121,7 @@ func (h *Highlighter) Tokens(b *buffer.Buffer, line int, dst []Token) []Token {
 	if h == nil || h.lang == nil || line < 0 || line >= b.NumLines() {
 		return dst[:0]
 	}
+	h.catchUp(b)
 	h.ensure(b, line)
 	state := stateNormal
 	if line < len(h.states) {

@@ -63,6 +63,9 @@ type Buffer struct {
 	// version counts changes to the text, so work derived from it (the git
 	// gutter) can tell whether it is still current.
 	version uint64
+
+	// edits records recent changes, for views that did not make them.
+	edits editLog
 }
 
 // New returns an empty buffer holding a single blank line.
@@ -244,6 +247,12 @@ func (b *Buffer) insert(p Pos, s []byte) Pos {
 	if len(s) == 0 {
 		return p
 	}
+	end := b.insertText(p, s)
+	b.edits.add(Edit{Version: b.version, From: p, OldEnd: p, NewEnd: end})
+	return end
+}
+
+func (b *Buffer) insertText(p Pos, s []byte) Pos {
 	b.version++
 	parts := splitLines(s)
 	cur := b.at(p.Line)
@@ -292,6 +301,7 @@ func (b *Buffer) insert(p Pos, s []byte) Pos {
 // bookkeeping; callers go through Delete.
 func (b *Buffer) remove(from, to Pos) {
 	b.version++
+	b.edits.add(Edit{Version: b.version, From: from, OldEnd: to, NewEnd: from})
 	if from.Line == to.Line {
 		cur := b.at(from.Line)
 		cur.text = append(cur.text[:from.Col], cur.text[to.Col:]...)

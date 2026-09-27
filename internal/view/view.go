@@ -46,11 +46,16 @@ type View struct {
 	goalCol   int
 	keepGoal  bool
 	clipboard []byte
+
+	// seen is the buffer version this view's positions are up to date with.
+	// A second view of the same buffer uses it to follow edits made in the
+	// first; see Sync.
+	seen uint64
 }
 
 // New returns a view onto buf with sensible defaults.
 func New(buf *buffer.Buffer) *View {
-	v := &View{Buf: buf, TabWidth: 4, Height: 24, Width: 80}
+	v := &View{Buf: buf, TabWidth: 4, Height: 24, Width: 80, seen: buf.Version()}
 	// A very large file gets no highlighting: the per-line scan is cheap, but
 	// nothing about a 50 MB log is improved by coloring it.
 	if !buf.Large() {
@@ -67,6 +72,54 @@ func (v *View) Reload() error {
 	if err != nil {
 		return err
 	}
+	v.Adopt(b)
+	return nil
+}
+
+// Mirror returns a second view of the same buffer, at the same place: what a
+// split pane shows when both panes are on one file. Edits through either are
+// edits to the one buffer; each view keeps its own cursor and scroll.
+func (v *View) Mirror() *View {
+	m := New(v.Buf)
+	m.Head, m.Anchor = v.Head, v.Anchor
+	m.Top, m.Left = v.Top, v.Left
+	m.TabWidth, m.ExpandTabs = v.TabWidth, v.ExpandTabs
+	m.seen = v.seen
+	return m
+}
+
+// Sync brings the view up to date with edits made through another view of
+// the same buffer: the cursor, selection and scroll move with the text they
+// were on. A view that fell too far behind to replay the edits keeps its line
+// numbers, clamped to the text.
+func (v *View) Sync() {
+	now := v.Buf.Version()
+	if now == v.seen {
+		return
+	}
+	if edits, ok := v.Buf.EditsSince(v.seen); ok {
+		for _, e := range edits {
+			v.Head = e.Map(v.Head)
+			v.Anchor = e.Map(v.Anchor)
+			v.Top = e.Map(buffer.Pos{Line: v.Top}).Line
+		}
+	}
+	v.MarkSeen()
+}
+
+// MarkSeen records that the view's positions are current: it made the edits
+// itself, or has just been brought up to date. Positions are clamped, since
+// nothing else guarantees they still exist.
+func (v *View) MarkSeen() {
+	v.Head = v.Buf.Clamp(v.Head)
+	v.Anchor = v.Buf.Clamp(v.Anchor)
+	v.Top = min(max(v.Top, 0), max(v.Buf.NumLines()-1, 0))
+	v.seen = v.Buf.Version()
+}
+
+// Adopt moves the view onto b, a fresh copy of the same file (after a reload
+// from disk), keeping its place where it still exists.
+func (v *View) Adopt(b *buffer.Buffer) {
 	v.Buf = b
 	if !b.Large() {
 		v.Syntax = syntax.New(syntax.Detect(b.Path()))
@@ -76,7 +129,7 @@ func (v *View) Reload() error {
 	v.Head = b.Clamp(v.Head)
 	v.Anchor = v.Head
 	v.Top = min(v.Top, max(b.NumLines()-1, 0))
-	return nil
+	v.seen = b.Version()
 }
 
 // touched tells the highlighter that everything from line onward may have
