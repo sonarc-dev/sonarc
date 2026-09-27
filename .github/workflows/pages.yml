@@ -2,7 +2,8 @@
 # https://sonarc-dev.github.io/sonarc/
 #
 # site/ is copied as is, with install.sh beside it; site/gen then renders the
-# docs from README.md and CONTRIBUTING.md and the releases page from GitHub.
+# docs from docs/*.md and CONTRIBUTING.md, with a search index, and the
+# releases page from GitHub.
 # It runs whenever any of those change and after every release, so the site
 # follows the repository.
 name: pages
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "docs/**"
       - "README.md"
       - "CONTRIBUTING.md"
       - "install.sh"

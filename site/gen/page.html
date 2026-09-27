@@ -43,16 +43,22 @@
 {{if eq .Kind "docs"}}
 <div class="doc">
   <details class="toc" id="toc">
-    <summary>Contents</summary>
-    <h2>On this page</h2>
-    <ol>
-      {{range .TOC}}<li><a href="#{{.ID}}">{{.Text}}</a>{{if .Sub}}
-        <ol>{{range .Sub}}<li><a href="#{{.ID}}">{{.Text}}</a></li>{{end}}</ol>{{end}}</li>
+    <summary>Contents and search</summary>
+    <div class="search">
+      <label for="doc-search" class="vh">Search the docs</label>
+      <input id="doc-search" type="search" placeholder="Search the docs" autocomplete="off" spellcheck="false">
+      <kbd class="slash" aria-hidden="true">/</kbd>
+      <ol id="doc-results" class="results" hidden></ol>
+    </div>
+    <h2>Docs</h2>
+    <ol class="pages">
+      {{range .Nav}}<li{{if .Current}} class="current"{{end}}><a href="{{.URL}}"{{if .Current}} aria-current="page"{{end}}>{{.Title}}</a>{{if .Current}}{{if $.TOC}}
+        <ol>{{range $.TOC}}<li><a href="#{{.ID}}">{{.Text}}</a></li>{{end}}</ol>{{end}}{{end}}</li>
       {{end}}
     </ol>
     <div class="other">
-      {{if .OtherDocs}}<a href="{{.Base}}docs/">Documentation</a>{{else}}<a href="{{.Base}}docs/contributing/">Contributing</a>{{end}}
       <a href="{{.Base}}releases/">Releases</a>
+      <a href="https://github.com/{{.Repo}}/issues/new/choose">Report a problem</a>
     </div>
   </details>
   <article class="prose">
@@ -102,7 +108,74 @@
 <script>
 (function () {
   var toc = document.getElementById("toc");
-  if (toc && window.matchMedia("(min-width: 861px)").matches) toc.open = true;
+  if (!toc) return;
+  if (window.matchMedia("(min-width: 861px)").matches) toc.open = true;
+
+  // Search: the index is one entry per section, fetched the first time the
+  // box is used. Every word typed must appear; headings count most.
+  var input = document.getElementById("doc-search");
+  var list = document.getElementById("doc-results");
+  var base = {{.Base}};
+  var index = null, loading = null;
+  function load() {
+    if (!loading) {
+      loading = fetch(base + "docs/search.json").then(function (r) { return r.json(); })
+        .then(function (d) { index = d; }, function () { index = []; });
+    }
+    return loading;
+  }
+  function esc(s) {
+    return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+  }
+  function snippet(text, word) {
+    var i = text.toLowerCase().indexOf(word);
+    if (i < 0) return text.slice(0, 110);
+    var from = Math.max(0, i - 40);
+    return (from > 0 ? "…" : "") + text.slice(from, from + 120) + (from + 120 < text.length ? "…" : "");
+  }
+  function show() {
+    var q = input.value.trim().toLowerCase();
+    var words = q.split(/\s+/).filter(Boolean);
+    if (!words.length || !index) { list.hidden = true; list.innerHTML = ""; return; }
+    var hits = [];
+    index.forEach(function (e) {
+      var h = (e.h || "").toLowerCase(), p = e.p.toLowerCase(), x = e.x.toLowerCase();
+      var score = 0;
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i], s = 0;
+        if (h.indexOf(w) >= 0) s += 6;
+        if (p.indexOf(w) >= 0) s += 3;
+        if (x.indexOf(w) >= 0) s += 1;
+        if (!s) return;
+        score += s;
+      }
+      hits.push({ e: e, score: score });
+    });
+    hits.sort(function (a, b) { return b.score - a.score; });
+    list.innerHTML = hits.slice(0, 8).map(function (hit, i) {
+      var e = hit.e;
+      return '<li><a href="' + base + e.u + '"' + (i === 0 ? ' class="first"' : "") + '><b>' + esc(e.h || e.p) + '</b>' +
+        (e.h ? '<small>' + esc(e.p) + '</small>' : "") + '<span>' + esc(snippet(e.x, words[0])) + '</span></a></li>';
+    }).join("") || '<li class="none">Nothing matches “' + esc(input.value.trim()) + '”.</li>';
+    list.hidden = false;
+  }
+  input.addEventListener("focus", load);
+  input.addEventListener("input", function () { load().then(show); });
+  input.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") {
+      var first = list.querySelector("a");
+      if (first) location.href = first.href;
+    } else if (ev.key === "Escape") {
+      input.value = ""; show(); input.blur();
+    }
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "/" && document.activeElement !== input && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+      ev.preventDefault();
+      toc.open = true;
+      input.focus();
+    }
+  });
 })();
 </script>
 </body>
