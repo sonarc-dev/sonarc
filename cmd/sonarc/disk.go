@@ -57,7 +57,7 @@ func (a *app) checkDisk() {
 			a.warnedDisk[v] = now
 			a.ui.Error("%s changed on disk; your unsaved edits are kept. Ctrl+K ! reloads it and discards them", name)
 		default:
-			if err := v.Reload(); err != nil {
+			if err := a.reload(v); err != nil {
 				a.ui.Error("%s changed on disk and could not be reread: %v", name, err)
 				a.warnedDisk[v] = now
 				continue
@@ -72,7 +72,7 @@ func (a *app) checkDisk() {
 // cmdReloadFile rereads the file on screen from disk, discarding unsaved
 // edits after asking.
 func (a *app) cmdReloadFile() {
-	v := a.v()
+	v := a.fileView()
 	if v.Buf.Path() == "" {
 		a.ui.Notify("this buffer has no file to reload")
 		return
@@ -84,7 +84,7 @@ func (a *app) cmdReloadFile() {
 			return
 		}
 	}
-	if err := v.Reload(); err != nil {
+	if err := a.reload(v); err != nil {
 		a.ui.Error("reload failed: %v", err)
 		return
 	}

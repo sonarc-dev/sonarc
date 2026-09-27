@@ -108,7 +108,7 @@ func (d *DiffView) StepBlock(dir, rows int) bool {
 
 // drawDiff renders the view into the text area: both line numbers, a +/-
 // marker, and the line, colored by kind. Tabs expand as they do in the text.
-func (u *UI) drawDiff(x0, w, height, tabWidth int) {
+func (u *UI) drawDiff(x0, w, y0, height, tabWidth int) {
 	th := u.Screen.Theme
 	d := &u.Diff
 	if d.Sel >= d.Top+height {
@@ -127,7 +127,7 @@ func (u *UI) drawDiff(x0, w, height, tabWidth int) {
 		base := th.Text
 		if idx == d.Sel {
 			base = th.CursorLine
-			u.fill(x0, row, w, base)
+			u.fill(x0, y0+row, w, base)
 		}
 		num := func(n int) string {
 			if n == 0 {
@@ -137,14 +137,14 @@ func (u *UI) drawDiff(x0, w, height, tabWidth int) {
 		}
 		gutter := th.Gutter.Background(bgOf(base))
 		if l.Kind == '~' {
-			u.drawText(x0, row, strings.Repeat(" ", numW*2+2)+"⋯", gutter, w)
+			u.drawText(x0, y0+row, strings.Repeat(" ", numW*2+2)+"⋯", gutter, w)
 			continue
 		}
 		newNum := l.New
 		if l.Kind == '-' {
 			newNum = 0 // its New is only where to go, not a line of its own
 		}
-		x := u.drawText(x0, row, num(l.Old)+" "+num(newNum)+" ", gutter, w)
+		x := u.drawText(x0, y0+row, num(l.Old)+" "+num(newNum)+" ", gutter, w)
 		style := base
 		switch l.Kind {
 		case '-':
@@ -152,8 +152,8 @@ func (u *UI) drawDiff(x0, w, height, tabWidth int) {
 		case '+':
 			style = th.GitAdded.Background(bgOf(base))
 		}
-		x = u.drawText(x, row, string(l.Kind)+" ", style, w)
-		u.drawExpanded(x, row, l.Text, style, w, tabWidth)
+		x = u.drawText(x, y0+row, string(l.Kind)+" ", style, w)
+		u.drawExpanded(x, y0+row, l.Text, style, w, tabWidth)
 	}
 }
 

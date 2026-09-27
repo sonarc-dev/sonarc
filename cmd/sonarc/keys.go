@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
+
+	"github.com/sonarc-dev/sonarc/internal/ui"
 )
 
 // keySpec identifies a key combination. Commands are bound to these rather than
@@ -63,6 +65,12 @@ func commandTable() map[string]command {
 		"toggle-sidebar": {"show or hide the file-tree sidebar", (*app).cmdToggleSidebar},
 		"select-theme":   {"choose a color theme", (*app).cmdSelectTheme},
 		"edit-keys":      {"change key bindings (keys.conf)", (*app).cmdEditKeys},
+
+		// Split panes.
+		"split-right": {"split: show this file again, side by side", func(a *app) { a.cmdSplit(ui.SplitRight) }},
+		"split-below": {"split: show this file again, one above the other", func(a *app) { a.cmdSplit(ui.SplitBelow) }},
+		"other-pane":  {"switch to the other pane", (*app).cmdOtherPane},
+		"only-pane":   {"close the other pane", (*app).cmdOnlyPane},
 
 		// In-file search.
 		"find":         {"find in this file", (*app).cmdFind},
@@ -136,6 +144,7 @@ var keymap = map[keySpec]string{
 	{key: tcell.KeyCtrlW}: "close-file",
 	{key: tcell.KeyCtrlD}: "delete-line",
 	{key: tcell.KeyF8}:    "show-changes",
+	{key: tcell.KeyF9}:    "other-pane",
 
 	// Replace is on Ctrl+R, not the conventional Ctrl+H: a terminal sends 0x08
 	// for Ctrl+H and tcell reports that as Backspace before it ever reaches the
@@ -199,6 +208,10 @@ var chords = map[rune]string{
 	'?': "index-status",
 	'h': "help",
 	't': "toggle-sidebar",
+	'1': "only-pane",
+	'2': "split-below",
+	'3': "split-right",
+	';': "other-pane",
 }
 
 func (a *app) onKey(ev *tcell.EventKey) {

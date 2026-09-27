@@ -53,17 +53,35 @@ type UI struct {
 	// Matches are search hits to highlight in the text area.
 	Matches []search.Match
 
-	// Changes, when set, returns how the file on screen differs from its
-	// last commit, for the marks in the gutter. It is a function because the
+	// Changes, when set, returns how a view's file differs from its last
+	// commit, for the marks in the gutter. It is a function because the
 	// answer depends on the text being drawn, and is only worth computing for
 	// the frame that shows it.
-	Changes func() []vcs.Hunk
+	Changes func(*view.View) []vcs.Hunk
 
+	// Split, when not SplitNone, shows Other in a second pane. View is always
+	// the pane with the keyboard; SecondFocused says whether that is the
+	// right (or bottom) pane rather than the left (or top) one.
+	Split         SplitMode
+	Other         *view.View
+	SecondFocused bool
+
+	// gutterW is the focused pane's line-number column.
 	gutterW int
 
 	// textX is the left edge of the text area, gutter and all. It is zero
 	// unless something (a sidebar) occupies the columns to its left.
 	textX int
+
+	// textH is the height of the text area, both panes included: everything
+	// above the results panel and the status bar.
+	textH int
+
+	// panes and sepX are the geometry from the last Layout: each pane on
+	// screen, and the separator column between side-by-side panes (-1 for
+	// none).
+	panes []pane
+	sepX  int
 }
 
 // New returns a UI drawing v onto s.
@@ -158,30 +176,6 @@ func digits(n int) int {
 	return d
 }
 
-// Layout recomputes the gutter width and tells the view how much room it has.
-// It must run before Draw and after any resize.
-func (u *UI) Layout() {
-	w, h := u.Screen.Size()
-	u.textX = u.sidebarWidth()
-	// Gutter is "%*d " — the widest line number plus a trailing space.
-	u.gutterW = digits(u.View.Buf.NumLines()) + 1
-	if u.gutterW < 3 {
-		u.gutterW = 3
-	}
-
-	// Two rows are reserved at the bottom for the status bar and the message
-	// line, plus however many the results panel is using.
-	u.View.Height = h - 2 - u.Panel.rows()
-	if u.View.Height < 1 {
-		u.View.Height = 1
-	}
-	u.View.Width = w - u.textX - u.gutterW
-	if u.View.Width < 1 {
-		u.View.Width = 1
-	}
-	u.View.ScrollToCursor()
-}
-
 // drawText writes s at (x, y), stopping at maxX. It returns the column after
 // the last cell written.
 func (u *UI) drawText(x, y int, s string, style tcell.Style, maxX int) int {
@@ -206,121 +200,22 @@ func (u *UI) fill(x, y, toX int, style tcell.Style) {
 func (u *UI) Draw() {
 	u.Layout()
 	w, h := u.Screen.Size()
-	th := u.Screen.Theme
-	v := u.View
-
 	u.Screen.Clear()
 
-	selFrom, selTo := v.Selection()
-	hasSel := v.HasSelection()
-
-	var scratch []rune
-	var comb []rune
-	var toks []syntax.Token
-
-	var marks []mark
-	if u.Changes != nil && !u.Diff.Open {
-		marks = changeMarks(u.Changes(), v.Top, v.Height)
-	}
-
-	if u.Diff.Open {
-		u.drawDiff(u.textX, w, v.Height, v.TabWidth)
-	}
-	for row := 0; row < v.Height && !u.Diff.Open; row++ {
-		y := row
-		lineNo := v.Top + row
-		if lineNo >= v.Buf.NumLines() {
-			// Past the end of the file. Leave it blank rather than drawing the
-			// tilde column vi uses; blank reads as "nothing here" to everyone.
-			continue
+	for _, p := range u.panes {
+		if p.focused && u.Diff.Open {
+			u.drawDiff(p.x0, p.x1, p.y0, p.rows, p.v.TabWidth)
+		} else {
+			u.drawPane(p)
 		}
-		onCursorLine := lineNo == v.Head.Line
-
-		// Gutter.
-		numStyle := th.Gutter
-		if onCursorLine {
-			numStyle = th.GutterCurrent
-		}
-		num := strconv.Itoa(lineNo + 1)
-		u.drawText(u.textX+u.gutterW-1-len(num), y, num, numStyle, w)
-		if marks != nil {
-			if r, st := u.markCell(marks[row]); r != 0 {
-				u.Screen.SetContent(u.textX+u.gutterW-1, y, r, nil, st)
-			}
-		}
-
-		ln := v.Buf.Line(lineNo)
-		lineStyle := th.Text
-		if onCursorLine {
-			lineStyle = th.CursorLine
-			// Extend the cursor-line highlight across the full width so it
-			// reads as a band rather than stopping at the end of the text.
-			u.fill(u.textX+u.gutterW, y, w, lineStyle)
-		}
-
-		// Syntax colors for this line. The highlighter caches the state each
-		// line inherits, so this costs a single scan of the visible line.
-		toks = v.Syntax.Tokens(v.Buf, lineNo, toks)
-
-		text.Iterate(ln, v.TabWidth, func(c text.Cell) bool {
-			if c.Col+c.Width <= v.Left {
-				return true // entirely scrolled off to the left
-			}
-			x := u.textX + u.gutterW + c.Col - v.Left
-			if x >= w {
-				return false // past the right edge; nothing further is visible
-			}
-
-			style := lineStyle
-			if cl := syntax.ClassAt(toks, c.ByteOff); cl != syntax.ClassNone {
-				style = classStyle(th, cl, lineStyle)
-			}
-			pos := buffer.Pos{Line: lineNo, Col: c.ByteOff}
-			// Search hits are painted first so that an active selection, which
-			// is where the cursor actually is, still stands out among them.
-			if inMatch(u.Matches, pos) {
-				style = th.Match
-			}
-			if hasSel && !pos.Less(selFrom) && pos.Less(selTo) {
-				style = th.Selection
-			}
-
-			if c.Kind == text.KindNormal {
-				main, cm := c.ClusterRunes(ln, comb)
-				comb = cm
-				if x >= u.textX+u.gutterW {
-					u.Screen.SetContent(x, y, main, cm, style)
-				}
-			} else {
-				// Tabs, control characters and invalid bytes expand to exactly
-				// Width runes, so they tile their cells one rune each.
-				scratch = c.Append(scratch[:0])
-				for i, r := range scratch {
-					cx := x + i
-					if cx < u.textX+u.gutterW {
-						continue // partially scrolled off
-					}
-					if cx >= w {
-						break
-					}
-					u.Screen.SetContent(cx, y, r, nil, style)
-				}
-			}
-			return true
-		})
-
-		// A selection spanning a line break should show the newline as a
-		// highlighted cell, or multi-line selections look ragged.
-		if hasSel && lineNo >= selFrom.Line && lineNo < selTo.Line {
-			x := u.textX + u.gutterW + text.Width(ln, v.TabWidth) - v.Left
-			if x >= u.textX+u.gutterW && x < w {
-				u.Screen.SetContent(x, y, ' ', nil, th.Selection)
-			}
+		if p.header >= 0 {
+			u.drawPaneHeader(p)
 		}
 	}
+	u.drawSeparator()
 
 	if rows := u.Panel.rows(); rows > 0 {
-		u.drawPanel(u.textX, w, v.Height, rows)
+		u.drawPanel(u.textX, w, u.textH, rows)
 	}
 	if u.textX > 0 {
 		u.drawSidebar(u.textX, h-2)
@@ -343,12 +238,141 @@ func (u *UI) Draw() {
 
 	// Put the real terminal cursor where the caret is, so the terminal's own
 	// cursor shape and blink apply and screen readers can follow it.
-	cx := u.textX + u.gutterW + v.CursorCol() - v.Left
-	cy := v.Head.Line - v.Top
-	if cx >= u.textX+u.gutterW && cx < w && cy >= 0 && cy < v.Height {
+	p := u.focusedPane()
+	v := p.v
+	cx := p.x0 + p.gutter + v.CursorCol() - v.Left
+	cy := p.y0 + v.Head.Line - v.Top
+	if cx >= p.x0+p.gutter && cx < p.x1 && cy >= p.y0 && cy < p.y0+p.rows {
 		u.Screen.ShowCursor(cx, cy)
 	} else {
 		u.Screen.HideCursor()
+	}
+}
+
+// drawPane renders one view's text and gutter into its pane. Search matches
+// and the cursor-line band belong to the pane with the keyboard; the other
+// pane marks its cursor with a block, so you can see where it will resume.
+func (u *UI) drawPane(p pane) {
+	th := u.Screen.Theme
+	v := p.v
+	textX, gutterW, w := p.x0, p.gutter, p.x1
+
+	selFrom, selTo := v.Selection()
+	hasSel := v.HasSelection()
+
+	var scratch []rune
+	var comb []rune
+	var toks []syntax.Token
+
+	var marks []mark
+	if u.Changes != nil {
+		marks = changeMarks(u.Changes(v), v.Top, v.Height)
+	}
+	var matches []search.Match
+	if p.focused {
+		matches = u.Matches
+	}
+
+	for row := 0; row < v.Height; row++ {
+		y := p.y0 + row
+		lineNo := v.Top + row
+		if lineNo >= v.Buf.NumLines() {
+			// Past the end of the file. Leave it blank rather than drawing the
+			// tilde column vi uses; blank reads as "nothing here" to everyone.
+			continue
+		}
+		onCursorLine := lineNo == v.Head.Line
+
+		// Gutter.
+		numStyle := th.Gutter
+		if onCursorLine && p.focused {
+			numStyle = th.GutterCurrent
+		}
+		num := strconv.Itoa(lineNo + 1)
+		u.drawText(textX+gutterW-1-len(num), y, num, numStyle, w)
+		if marks != nil {
+			if r, st := u.markCell(marks[row]); r != 0 {
+				u.Screen.SetContent(textX+gutterW-1, y, r, nil, st)
+			}
+		}
+
+		ln := v.Buf.Line(lineNo)
+		lineStyle := th.Text
+		if onCursorLine && p.focused {
+			lineStyle = th.CursorLine
+			// Extend the cursor-line highlight across the full width so it
+			// reads as a band rather than stopping at the end of the text.
+			u.fill(textX+gutterW, y, w, lineStyle)
+		}
+
+		// Syntax colors for this line. The highlighter caches the state each
+		// line inherits, so this costs a single scan of the visible line.
+		toks = v.Syntax.Tokens(v.Buf, lineNo, toks)
+
+		text.Iterate(ln, v.TabWidth, func(c text.Cell) bool {
+			if c.Col+c.Width <= v.Left {
+				return true // entirely scrolled off to the left
+			}
+			x := textX + gutterW + c.Col - v.Left
+			if x >= w {
+				return false // past the right edge; nothing further is visible
+			}
+
+			style := lineStyle
+			if cl := syntax.ClassAt(toks, c.ByteOff); cl != syntax.ClassNone {
+				style = classStyle(th, cl, lineStyle)
+			}
+			pos := buffer.Pos{Line: lineNo, Col: c.ByteOff}
+			// Search hits are painted first so that an active selection, which
+			// is where the cursor actually is, still stands out among them.
+			if inMatch(matches, pos) {
+				style = th.Match
+			}
+			if hasSel && !pos.Less(selFrom) && pos.Less(selTo) {
+				style = th.Selection
+			}
+
+			if c.Kind == text.KindNormal {
+				main, cm := c.ClusterRunes(ln, comb)
+				comb = cm
+				if x >= textX+gutterW {
+					u.Screen.SetContent(x, y, main, cm, style)
+				}
+			} else {
+				// Tabs, control characters and invalid bytes expand to exactly
+				// Width runes, so they tile their cells one rune each.
+				scratch = c.Append(scratch[:0])
+				for i, r := range scratch {
+					cx := x + i
+					if cx < textX+gutterW {
+						continue // partially scrolled off
+					}
+					if cx >= w {
+						break
+					}
+					u.Screen.SetContent(cx, y, r, nil, style)
+				}
+			}
+			return true
+		})
+
+		// A selection spanning a line break should show the newline as a
+		// highlighted cell, or multi-line selections look ragged.
+		if hasSel && lineNo >= selFrom.Line && lineNo < selTo.Line {
+			x := textX + gutterW + text.Width(ln, v.TabWidth) - v.Left
+			if x >= textX+gutterW && x < w {
+				u.Screen.SetContent(x, y, ' ', nil, th.Selection)
+			}
+		}
+	}
+
+	if !p.focused {
+		cx := textX + gutterW + v.CursorCol() - v.Left
+		cy := p.y0 + v.Head.Line - v.Top
+		if cx >= textX+gutterW && cx < w && cy >= p.y0 && cy < p.y0+p.rows {
+			r, comb, _, _ := u.Screen.GetContent(cx, cy)
+			u.Screen.SetContent(cx, cy, r, comb, th.Selection)
+		}
 	}
 }
 

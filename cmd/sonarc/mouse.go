@@ -68,7 +68,12 @@ func (a *app) onMouse(ev *tcell.EventMouse) {
 		case a.ui.Diff.Open && region != ui.RegionPanel:
 			a.ui.Diff.Scroll(delta, a.ui.View.Height)
 		default:
-			a.v().Scroll(delta)
+			// The wheel scrolls the pane under the pointer, focused or not.
+			if v, _, _, _, ok := a.ui.PaneAt(x, y); ok {
+				v.Scroll(delta)
+			} else {
+				a.v().Scroll(delta)
+			}
 		}
 
 	case tcell.Button1:
@@ -76,6 +81,14 @@ func (a *app) onMouse(ev *tcell.EventMouse) {
 		if first {
 			a.pressed = true
 			a.pressRegion = region
+		}
+		// A press in the other pane moves the keyboard there first, as the
+		// press on its title line does.
+		if first && (region == ui.RegionText || region == ui.RegionGutter || region == ui.RegionPaneHeader) {
+			if v, _, _, _, ok := a.ui.PaneAt(x, y); ok && v != a.ui.View {
+				a.cmdOtherPane()
+				a.ui.Layout() // the focused pane's geometry is what follows
+			}
 		}
 		switch a.pressRegion {
 		case ui.RegionText, ui.RegionGutter:
@@ -117,9 +130,11 @@ func (a *app) onMouse(ev *tcell.EventMouse) {
 // a selection can be pulled to the start of a line.
 func (a *app) textPointer(x, y int, first bool) {
 	v := a.v()
+	y -= a.ui.TextTop() // rows within the focused pane
 	if y >= v.Height {
 		return // dragged down into the panel or status bar
 	}
+	y = max(y, 0) // dragged up past the pane's top: its first row
 	col := a.ui.TextCol(x)
 	if col < 0 {
 		col = 0

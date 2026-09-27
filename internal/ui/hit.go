@@ -17,6 +17,10 @@ const (
 	// RegionSidebarEdge is the separator column on the sidebar's right; a
 	// drag from it resizes the sidebar.
 	RegionSidebarEdge
+	// RegionPaneHeader is a split pane's title line.
+	RegionPaneHeader
+	// RegionPaneEdge is the line between side-by-side panes.
+	RegionPaneEdge
 )
 
 // RegionAt reports which part of the screen a cell belongs to. It relies on
@@ -31,17 +35,34 @@ func (u *UI) RegionAt(x, y int) Region {
 		return RegionSidebarEdge
 	case x < u.textX:
 		return RegionSidebar
-	case u.Panel.rows() > 0 && y >= u.View.Height:
+	case u.Panel.rows() > 0 && y >= u.textH:
 		return RegionPanel
-	case x < u.textX+u.gutterW:
-		return RegionGutter
+	case x == u.sepX:
+		return RegionPaneEdge
+	}
+	for _, p := range u.panes {
+		if x < p.x0 || x >= p.x1 {
+			continue
+		}
+		switch {
+		case y == p.header:
+			return RegionPaneHeader
+		case y < p.y0 || y >= p.y0+p.rows:
+			continue
+		case x < p.x0+p.gutter:
+			return RegionGutter
+		}
+		return RegionText
 	}
 	return RegionText
 }
 
-// TextCol converts a screen column in the text area to a column relative to
-// the start of the text, after the sidebar and gutter.
-func (u *UI) TextCol(x int) int { return x - u.textX - u.gutterW }
+// TextCol converts a screen column in the focused pane to a column relative
+// to the start of its text, after the sidebar and gutter.
+func (u *UI) TextCol(x int) int {
+	p := u.focusedPane()
+	return x - p.x0 - p.gutter
+}
 
 // SidebarRowAt maps a screen row to an index into the tree's rows. The header
 // occupies the first row and is not an entry.
@@ -68,7 +89,7 @@ func (u *UI) PanelRowAt(y int) (int, bool) {
 		return 0, false
 	}
 	listRows := rows - 1
-	i := y - u.View.Height - 1
+	i := y - u.textH - 1
 	if i < 0 || i >= listRows {
 		return 0, false
 	}

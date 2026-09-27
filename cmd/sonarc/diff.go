@@ -238,7 +238,7 @@ func (a *app) goToDiffLine() {
 func (a *app) diffClick(x, y int) {
 	d := &a.ui.Diff
 	a.ui.Sidebar.Focused = false
-	if idx := d.Top + y; idx < len(d.Lines) {
+	if idx := d.Top + y - a.ui.TextTop(); idx >= d.Top && idx < len(d.Lines) {
 		d.Move(idx-d.Sel, a.ui.View.Height)
 	}
 	if a.click.register(x, y, a.now()) == 2 {

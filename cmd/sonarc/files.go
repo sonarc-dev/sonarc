@@ -31,6 +31,7 @@ func (a *app) cmdCloseOthers() {
 		a.ui.Notify("no other files are open")
 		return
 	}
+	a.dropOther()
 	keep := a.v()
 	var others []*view.View
 	for _, v := range a.views {
@@ -76,7 +77,7 @@ func (a *app) settleUnsaved(vs []*view.View) bool {
 	case "s", "S":
 		for _, v := range dirty {
 			if v.Buf.Path() == "" {
-				a.switchTo(indexOf(a.views, v))
+				a.switchTo(a.fileIndex(v))
 				a.cmdSaveAs()
 			} else if !a.writeView(v) {
 				return false
@@ -98,6 +99,9 @@ func (a *app) settleUnsaved(vs []*view.View) bool {
 // removeView drops view i, showing its neighbor instead. There is always a
 // view on screen, so the last one is replaced by an empty buffer.
 func (a *app) removeView(i int) {
+	if o := a.ui.Other; o != nil && o.Buf == a.views[i].Buf {
+		a.dropOther() // the other pane shows the file being closed
+	}
 	a.rememberPlaces(a.views[i])
 	delete(a.warnedDisk, a.views[i])
 	a.forgetView(a.views[i])
@@ -173,8 +177,14 @@ func (a *app) switchTo(i int) {
 	if i < 0 || i >= len(a.views) {
 		return
 	}
+	f := a.views[i]
+	f.Sync() // edits made through a mirror while it was off screen
+	shown := a.paneFor(f)
+	if old := a.ui.View; old != shown && old != a.ui.Other && !a.isFileView(old) {
+		a.forgetView(old) // a mirror that is no longer on screen
+	}
 	a.cur = i
-	a.ui.View = a.views[i]
+	a.ui.View = shown
 	// Going to a file means looking at it, not at a diff.
 	a.closeDiff()
 	// Every route to a buffer — goto-definition, fuzzy open, jump-back, a
@@ -201,7 +211,7 @@ func (a *app) cmdSave() {
 		a.cmdSaveAs()
 		return
 	}
-	if !a.writeView(a.v()) {
+	if !a.writeView(a.fileView()) {
 		return
 	}
 	if path := a.keysPath(); path != "" && a.v().Buf.Path() == path {

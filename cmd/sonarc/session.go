@@ -124,7 +124,7 @@ func (a *app) saveSession() {
 		if v.Buf.Path() == "" {
 			continue
 		}
-		if v == a.v() {
+		if v.Buf == a.v().Buf {
 			s.Active = len(s.Files)
 		}
 		s.Files = append(s.Files, placeOf(v))

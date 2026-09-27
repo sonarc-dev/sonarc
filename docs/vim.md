@@ -34,6 +34,9 @@ and needs no configuration to get them.
 | preview window, `Ctrl+W }` | `Ctrl+K v`, peek at the definition |
 | `:e file`, `:find` | `Ctrl+P` by fuzzy name, `Ctrl+O` by path |
 | `:ls`, `:b` | `Ctrl+K u` |
+| `:vsplit`, `:split` | `Ctrl+K 3`, `Ctrl+K 2` |
+| `Ctrl+W w` | `F9` or `Ctrl+K ;` |
+| `Ctrl+W o`, `:only` | `Ctrl+K 1` |
 | `:bd` | `Ctrl+W` |
 | `:e!` | `Ctrl+K !` |
 | NERDTree, netrw | `Ctrl+E` |
@@ -46,7 +49,6 @@ and needs no configuration to get them.
   That is the point of sonarc, and it is not coming back as an option.
 - **Scripting and plugins.** There is no configuration language, though any
   key can be rebound in [`keys.conf`](keys.md#changing-keys).
-- **Split windows.** One file is on screen at a time for now.
 
 ## What you get without configuring anything
 

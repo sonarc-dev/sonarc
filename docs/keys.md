@@ -77,6 +77,28 @@ directories are read only when you expand them.
 The tree is on `Ctrl+E` rather than the more common `Ctrl+B` because `Ctrl+B`
 is tmux's default prefix: tmux would take it before the editor saw it.
 
+## Split panes
+
+| Key | Action |
+|---|---|
+| `Ctrl+K 3` | split side by side, showing this file again |
+| `Ctrl+K 2` | split one above the other |
+| `F9` / `Ctrl+K ;` | switch to the other pane |
+| `Ctrl+K 1` | back to one pane, keeping the one you are in |
+
+The numbers follow emacs's window commands. A split starts with the same file
+in both panes and the keyboard in the new one; open another file there with
+`Ctrl+P`, go to a definition, or anything else. Each pane has a title line
+naming its file, bright for the pane with the keyboard.
+
+Both panes can show one file with separate cursors: an edit in one appears in
+the other at once, and the other pane's cursor stays on the text it was on.
+Clicking in a pane moves the keyboard there, and the wheel scrolls the pane
+under the pointer. Search highlights and diffs belong to the pane with the
+keyboard. On a terminal too narrow for two 30-column panes the split stacks
+instead, and on one too short to stack, the focused pane fills the screen
+until there is room again.
+
 ## Search
 
 | Key | Action |

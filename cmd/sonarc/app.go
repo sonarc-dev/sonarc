@@ -129,12 +129,12 @@ func newApp(scr *term.Screen, buf *buffer.Buffer) *app {
 	v := view.New(buf)
 	a := &app{scr: scr, views: []*view.View{v}, now: time.Now, warnedDisk: map[*view.View]buffer.Stamp{}, keys: defaultBindings()}
 	a.ui = ui.New(scr, v)
-	a.ui.Changes = func() []vcs.Hunk { return a.hunksFor(a.v()) }
+	a.ui.Changes = func(v *view.View) []vcs.Hunk { return a.hunksFor(v) }
 	return a
 }
 
 // v returns the view currently on screen.
-func (a *app) v() *view.View { return a.views[a.cur] }
+func (a *app) v() *view.View { return a.ui.View }
 
 // run opens the given files or folder and drives the editor until the user quits.
 func run(args []string, lineNo int) error {
@@ -207,7 +207,9 @@ func run(args []string, lineNo int) error {
 	defer stopSignals()
 	a.loop()
 	// However the loop ended, a quit or a lost connection, keep where the
-	// user was.
+	// user was. Closing the second pane first hands a mirror's place to the
+	// file's own view, which is the one remembered.
+	a.dropOther()
 	a.saveSession()
 	a.rememberPlaces(a.views...)
 	return nil
