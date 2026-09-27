@@ -303,3 +303,20 @@ footer a { text-decoration: none; }
   .toc ol:first-of-type { padding-bottom: 14px; }
   .rel { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 }
+
+/* Demo */
+section.demo { padding-block: 72px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.demo header { display: grid; gap: 8px; }
+.demo header p { margin: 0; color: var(--ink-2); max-width: 64ch; }
+.demo-stage { aspect-ratio: 120 / 44; max-width: 100%; display: grid; place-items: center; background: var(--term-bg); }
+.demo-stage.playing { aspect-ratio: auto; display: block; place-items: normal; }
+.play {
+  display: inline-flex; align-items: center; gap: 12px; cursor: pointer;
+  font: 500 15px/1 var(--display); color: var(--term-fg);
+  background: transparent; border: 1px solid var(--term-edge); border-radius: 999px; padding: 14px 22px 14px 16px;
+}
+.play svg { width: 22px; height: 22px; fill: var(--mark); }
+.play span { color: #8a93a0; font-weight: 400; }
+.play:hover { border-color: var(--mark); }
+.play:disabled { cursor: progress; }
+.demo .ap-wrapper { background: var(--term-bg); }

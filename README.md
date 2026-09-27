@@ -12,7 +12,7 @@ curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh
 sonarc path/to/file.c
 ```
 
-Website: <https://sonarc-dev.github.io/sonarc/>
+Website, with a half-minute demo: <https://sonarc-dev.github.io/sonarc/>
 
 ## Why it exists
 
