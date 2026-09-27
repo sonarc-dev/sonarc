@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/sonarc-dev/sonarc/discussions
+    about: Ask how to do something, or discuss an idea before it becomes an issue.
+  - name: Documentation
+    url: https://sonarc-dev.github.io/sonarc/docs/
+    about: Every key and feature, kept in step with the code.

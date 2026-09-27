@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in sonarc does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Most terminal problems depend on the terminal, tmux and ssh in between, so the details below usually decide whether a bug can be reproduced.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. sonarc ~/src/linux
+        2. Ctrl+] on vfs_read
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `sonarc -version`.
+      placeholder: sonarc v0.1.1
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: sonarc -doctor
+      description: Run it inside the same terminal and tmux session where the bug happens.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Terminal and connection
+      description: The terminal app, and whether you are in tmux or screen over ssh.
+      placeholder: macOS Terminal, ssh, tmux 3.4
+  - type: textarea
+    id: trace
+    attributes:
+      label: Input trace (for keys or clicks that do nothing)
+      description: Run `sonarc -trace-input /tmp/trace.log`, press the key or click once, quit, and paste the log.
+      render: text
