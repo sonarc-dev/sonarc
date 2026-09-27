@@ -84,7 +84,8 @@ stay fast to scroll and edit.
 `sonarc -update` replaces the binary where it is, so it needs write access to
 that directory. If sonarc was installed by root or a package manager, update it
 the same way, or install your own copy with the install script into
-`~/.local/bin`. Set `SONARC_NO_UPDATE_CHECK=1` to stop the daily check.
+`~/.local/bin`. It downloads with `curl` or `wget`; with neither installed,
+it says so, and you can copy a release binary over by hand. Set `SONARC_NO_UPDATE_CHECK=1` to stop the daily check.
 
 ## Still stuck
 

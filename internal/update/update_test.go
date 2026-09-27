@@ -99,6 +99,14 @@ func TestInstallReportsAMissingPlatform(t *testing.T) {
 	}
 }
 
+func TestInstallNeedsCurlOrWget(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	_, err := Source{API: "http://127.0.0.1:1"}.Latest(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "curl or wget") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestNewer(t *testing.T) {
 	for _, c := range []struct {
 		tag, cur string

@@ -6,6 +6,7 @@ package update
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,13 +14,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Repo is where releases are published.
@@ -33,7 +33,6 @@ type Source struct {
 	// Download is the base that release files are under, one directory per
 	// tag: https://github.com/sonarc-dev/sonarc/releases/download by default.
 	Download string
-	Client   *http.Client
 }
 
 func (s Source) api() string {
@@ -50,32 +49,16 @@ func (s Source) download() string {
 	return "https://github.com/" + Repo + "/releases/download"
 }
 
-func (s Source) client() *http.Client {
-	if s.Client != nil {
-		return s.Client
-	}
-	return &http.Client{Timeout: 5 * time.Minute}
-}
-
 // Latest returns the tag of the newest release that is not a pre-release.
 func (s Source) Latest(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", s.api()+"/repos/"+Repo+"/releases/latest", nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	resp, err := s.client().Do(req)
+	body, err := fetch(ctx, s.api()+"/repos/"+Repo+"/releases/latest", 1<<20)
 	if err != nil {
 		return "", fmt.Errorf("checking for a new version: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("checking for a new version: GitHub answered %s", resp.Status)
 	}
 	var rel struct {
 		Tag string `json:"tag_name"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil || rel.Tag == "" {
+	if err := json.Unmarshal(body, &rel); err != nil || rel.Tag == "" {
 		return "", errors.New("checking for a new version: unexpected answer from GitHub")
 	}
 	return rel.Tag, nil
@@ -92,7 +75,7 @@ func (s Source) Install(ctx context.Context, tag, exe string) error {
 	name := Asset()
 	base := s.download() + "/" + tag
 
-	sums, err := s.fetch(ctx, base+"/checksums.txt", 1<<20)
+	sums, err := fetch(ctx, base+"/checksums.txt", 1<<20)
 	if err != nil {
 		return err
 	}
@@ -108,7 +91,7 @@ func (s Source) Install(ctx context.Context, tag, exe string) error {
 	}
 	defer os.Remove(tmp.Name()) // a no-op once renamed
 
-	if err := s.fetchTo(ctx, base+"/"+name, tmp); err != nil {
+	if err := fetchTo(ctx, base+"/"+name, tmp); err != nil {
 		tmp.Close()
 		return err
 	}
@@ -128,41 +111,56 @@ func (s Source) Install(ctx context.Context, tag, exe string) error {
 	return os.Rename(tmp.Name(), exe)
 }
 
-func (s Source) get(ctx context.Context, url string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
+// Downloads go through curl or wget, whichever is installed, as install.sh's
+// do. Go's own HTTP client would work too, but TLS and HTTP/2 double the size
+// of the binary for three requests an editor makes once a day at most.
+
+// fetch returns what url answers, up to limit bytes.
+func fetch(ctx context.Context, url string, limit int64) ([]byte, error) {
+	var buf capped
+	buf.limit = limit
+	if err := fetchTo(ctx, url, &buf); err != nil {
 		return nil, err
 	}
-	resp, err := s.client().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("downloading %s: %w", url, err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
-		return nil, fmt.Errorf("downloading %s: %s", url, resp.Status)
-	}
-	return resp, nil
+	return buf.Bytes(), nil
 }
 
-func (s Source) fetch(ctx context.Context, url string, limit int64) ([]byte, error) {
-	resp, err := s.get(ctx, url)
-	if err != nil {
-		return nil, err
+// fetchTo writes what url answers to w. Anything but a 200 is an error.
+func fetchTo(ctx context.Context, url string, w io.Writer) error {
+	var cmd *exec.Cmd
+	if curl, err := exec.LookPath("curl"); err == nil {
+		cmd = exec.CommandContext(ctx, curl, "-fsSL", "--proto", "=https,http", "-H", "Accept: application/vnd.github+json", url)
+	} else if wget, err := exec.LookPath("wget"); err == nil {
+		cmd = exec.CommandContext(ctx, wget, "-q", "-O", "-", "--header=Accept: application/vnd.github+json", url)
+	} else {
+		return errors.New("downloading needs curl or wget, and neither is installed")
 	}
-	defer resp.Body.Close()
-	return io.ReadAll(io.LimitReader(resp.Body, limit))
-}
-
-func (s Source) fetchTo(ctx context.Context, url string, w io.Writer) error {
-	resp, err := s.get(ctx, url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if _, err := io.Copy(w, resp.Body); err != nil {
+	var stderr strings.Builder
+	cmd.Stdout, cmd.Stderr = w, &stderr
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			return fmt.Errorf("downloading %s: %w", url, ctx.Err())
+		}
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			err = errors.New(msg)
+		}
 		return fmt.Errorf("downloading %s: %w", url, err)
 	}
 	return nil
+}
+
+// capped is a buffer that refuses to grow past limit, so a broken or hostile
+// answer cannot fill memory.
+type capped struct {
+	bytes.Buffer
+	limit int64
+}
+
+func (c *capped) Write(p []byte) (int, error) {
+	if int64(c.Len()+len(p)) > c.limit {
+		return 0, errors.New("answer too large")
+	}
+	return c.Buffer.Write(p)
 }
 
 // checksum finds name's sha256 in a sha256sum listing.

@@ -43,8 +43,8 @@ make deploy HOST=myserver      # detects the remote arch and copies the right on
 sonarc -update
 ```
 
-This fetches the latest release the same way the install script does and
-replaces the binary in place. A running sonarc keeps running, and nothing
+This fetches the latest release the same way the install script does, with
+`curl` or `wget`, and replaces the binary in place. A running sonarc keeps running, and nothing
 changes if the download or the checksum fails.
 
 Once a day the editor asks GitHub whether a newer release exists and says so
