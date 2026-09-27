@@ -67,6 +67,25 @@ make release                   # linux and macOS, amd64 and arm64, with checksum
 make deploy HOST=myserver      # detects the remote arch and scp's the right one
 ```
 
+### Verifying a release
+
+Every binary has a GitHub build-provenance attestation, and each release's
+`checksums.txt` is signed with a keyless cosign signature from the release
+workflow. With the GitHub CLI:
+
+```sh
+gh attestation verify sonarc-linux-amd64 -R sonarc-dev/sonarc
+```
+
+Or with cosign, then check the binary against the verified checksums:
+
+```sh
+cosign verify-blob checksums.txt --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/sonarc-dev/sonarc/\.github/workflows/release\.yml@' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+sha256sum --check --ignore-missing checksums.txt
+```
+
 Then, on the server:
 
 ```sh
