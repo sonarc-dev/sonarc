@@ -1,0 +1,22 @@
+# Weekly updates for the workflow actions and both Go modules: the editor
+# and the website generator in site/gen.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+  - package-ecosystem: gomod
+    directory: /site/gen
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
