@@ -1,0 +1,82 @@
+# Checks every push to main and every pull request: formatting, vet, the full
+# test suite on Linux and macOS, the race detector, known vulnerabilities, the
+# website generator, and the install script on the platforms it supports.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make lint
+      - run: go test ./...
+      - name: Race detector
+        if: runner.os == 'Linux'
+        run: make race
+
+  vulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+      - run: cd site/gen && go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: site/gen/go.mod
+          cache-dependency-path: site/gen/go.sum
+      - name: Vet and format the generator
+        run: |
+          cd site/gen
+          go vet ./...
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - name: Build the site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: make site
+
+  install:
+    # The one-line installer, run against the real latest release.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        if: runner.os == 'Linux'
+        run: shellcheck install.sh .github/scripts/*.sh
+      - run: SONARC_INSTALL_DIR="$PWD/bin" sh install.sh
+      - run: ./bin/sonarc -version
+
+  install-alpine:
+    # busybox sh and wget: no bash, no curl.
+    runs-on: ubuntu-latest
+    container: alpine:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: SONARC_INSTALL_DIR="$PWD/bin" sh install.sh
+      - run: ./bin/sonarc -version
