@@ -29,6 +29,10 @@ type txn struct {
 	before Pos
 	after  Pos
 	at     time.Time
+
+	// width is how many edits one keystroke made, for a transaction made
+	// by a Group: typing at several cursors. Zero for anything else.
+	width int
 }
 
 type undoStack struct {
@@ -37,6 +41,14 @@ type undoStack struct {
 	nextID uint64
 	saved  uint64 // id of the transaction on top when the file was last saved
 	open   bool   // the newest done entry is still accepting coalesced edits
+
+	// grouping makes every edit join one transaction, groupID, whatever
+	// its shape: several cursors typing at once undo together.
+	grouping bool
+	groupID  uint64
+	// groupOpen says the newest transaction is a Group of plain typing (or
+	// of deleting) that the next keystroke's Group may continue.
+	groupOpen bool
 }
 
 // advance returns the position reached by inserting s at p.
@@ -93,7 +105,13 @@ func (u *undoStack) canCoalesce(o op, now time.Time) bool {
 // a new one. Any redo history is discarded, since the timeline just forked.
 func (u *undoStack) record(o op, before, after Pos, now time.Time) {
 	u.undone = u.undone[:0]
-	if u.canCoalesce(o, now) {
+	if u.grouping && u.groupID != 0 && u.topID() == u.groupID {
+		t := &u.done[len(u.done)-1]
+		t.ops = append(t.ops, o)
+		t.at = now
+		return
+	}
+	if !u.grouping && u.canCoalesce(o, now) {
 		t := &u.done[len(u.done)-1]
 		t.ops = append(t.ops, o)
 		t.after = after
@@ -108,7 +126,10 @@ func (u *undoStack) record(o op, before, after Pos, now time.Time) {
 		after:  after,
 		at:     now,
 	})
-	u.open = true
+	u.open = !u.grouping
+	if u.grouping {
+		u.groupID = u.nextID
+	}
 }
 
 // topID returns the id of the newest applied transaction, or 0 if none.
@@ -119,10 +140,58 @@ func (u *undoStack) topID() uint64 {
 	return u.done[len(u.done)-1].id
 }
 
+// Group makes every edit fn makes a single undo step, which puts the cursor
+// back at before when undone and at after when redone. Editing at several
+// cursors at once goes through here, so one keystroke undoes as one.
+func (b *Buffer) Group(before Pos, fn func() (after Pos)) {
+	u := &b.undo
+	continuing := u.groupOpen
+	u.open, u.groupOpen = false, false
+	u.grouping, u.groupID = true, 0
+	after := fn()
+	if id := u.groupID; id != 0 && u.topID() == id {
+		n := len(u.done)
+		t := &u.done[n-1]
+		t.before, t.after, t.width = before, after, len(t.ops)
+		// Typing a word at three cursors undoes as the word, not letter by
+		// letter: a keystroke of the same plain kind, at as many cursors,
+		// soon after the last, joins it.
+		if kind, ok := plainKind(t.ops); ok {
+			if n > 1 && continuing {
+				prev := &u.done[n-2]
+				if pk, ok := plainKind(prev.ops); ok && pk == kind && prev.width == t.width &&
+					t.at.Sub(prev.at) <= coalesceWindow {
+					prev.ops = append(prev.ops, t.ops...)
+					prev.after, prev.at = after, t.at
+					u.done = u.done[:n-1]
+				}
+			}
+			u.groupOpen = true
+		}
+	}
+	u.grouping, u.groupID = false, 0
+	u.open = false
+	b.modified = u.topID() != u.saved
+}
+
+// plainKind reports whether ops are all of one kind with no line breaks,
+// which is what typing or deleting within lines looks like.
+func plainKind(ops []op) (opKind, bool) {
+	if len(ops) == 0 {
+		return 0, false
+	}
+	for _, o := range ops {
+		if o.kind != ops[0].kind || hasNewline(o.text) {
+			return 0, false
+		}
+	}
+	return ops[0].kind, true
+}
+
 // BreakUndo ends the current coalescing group, so the next edit starts a fresh
 // undo step. The editor calls this when the cursor moves by navigation: typing,
 // arrowing away, then typing again should undo as two steps, not one.
-func (b *Buffer) BreakUndo() { b.undo.open = false }
+func (b *Buffer) BreakUndo() { b.undo.open, b.undo.groupOpen = false, false }
 
 // Insert places s at p and returns the position just past it. Newlines in s
 // split lines. The edit is recorded for undo.
