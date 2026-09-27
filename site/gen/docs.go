@@ -31,7 +31,7 @@ func (s site) docPages() ([]docPage, error) {
 	}
 	pages := []docPage{{
 		Src: "docs/README.md", URL: "docs/", Title: "Documentation",
-		Lede: "Everything sonarc does, every key, and how it works, kept in step with the code.",
+		Lede: "Everything sonarc does, every key, and how it works, kept in step with the code",
 	}}
 	for _, line := range strings.Split(string(index), "\n") {
 		m := navLine.FindStringSubmatch(strings.TrimSpace(line))
@@ -90,10 +90,10 @@ func (s site) docs() error {
 		}
 		lede := p.Lede
 		if lede != "" {
-			lede += "."
+			lede = strings.ToUpper(lede[:1]) + lede[1:] + "."
 		}
 		data := pageData{
-			Title: title, Lede: strings.ToUpper(lede[:1]) + lede[1:], Kind: "docs", Base: base,
+			Title: title, Lede: lede, Kind: "docs", Base: base,
 			Body: r.HTML, TOC: r.TOC, Nav: nav, Source: p.Src, Repo: s.repo, Commit: s.commit,
 		}
 		if err := write(filepath.Join(s.out, filepath.FromSlash(p.URL), "index.html"), data); err != nil {
