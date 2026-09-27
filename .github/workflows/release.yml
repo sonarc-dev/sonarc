@@ -41,7 +41,7 @@ jobs:
       - run: go test ./...
       - run: make release VERSION="$TAG"
       - name: Record build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: build/sonarc-*
       - uses: sigstore/cosign-installer@v3
