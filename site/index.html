@@ -75,7 +75,7 @@
 <section class="hero">
   <div class="eyebrow">Terminal code editor · Linux &amp; macOS<!--latest--></div>
   <h1>Find your way through huge codebases, over ssh.</h1>
-  <p class="lede">sonarc is a modeless editor for code on remote machines. <strong>Ping a symbol and get its definition, references and callers back</strong>, from cscope, ctags or its own indexer. One static 4&nbsp;MB binary, built to run inside tmux.</p>
+  <p class="lede">sonarc is a modeless editor for code on remote machines. <strong>Ping a symbol and get its definition, references and callers back</strong>, from cscope, ctags, a language server or its own indexer. One static 4&nbsp;MB binary, built to run inside tmux.</p>
   <div class="install">
     <div class="cmd">
       <code id="install-cmd"><span class="p">$</span>curl -fsSL https://sonarc-dev.github.io/sonarc/install.sh | sh</code>
@@ -176,10 +176,14 @@
   <div class="feat-grid">
     <ul class="feat-list">
       <li><b>Code navigation</b><span>Go to definition, peek, find references, callers, callees, assignments and includers, with a jump-back stack.</span></li>
+      <li><b>Language servers, if installed</b><span>gopls, clangd, rust-analyzer and others answer about the exact symbol under the cursor, with nothing to configure.</span></li>
+      <li><b>Split panes</b><span>Two files side by side or stacked, or one file twice with separate cursors.</span></li>
+      <li><b>Multiple cursors</b><span>Add cursors down a column or at each occurrence of a word, and type at all of them.</span></li>
       <li><b>Project search</b><span>Text and regex search across the tree through <code>git grep</code>, and symbol search by name.</span></li>
       <li><b>Changes and diffs</b><span>The files changed since the last commit sit under the tree. Select one to read its diff in place.</span></li>
       <li><b>Sessions that survive ssh</b><span>Open files, cursors and folders are saved every few seconds, so a dropped connection loses nothing.</span></li>
       <li><b>Works with nothing installed</b><span>Without cscope or ctags, a built-in indexer still covers C and C++, Go and Python.</span></li>
+      <li><b>Your keys, your way</b><span>Rebind any command in keys.conf; F1 always lists what your terminal can send.</span></li>
       <li><b>Mouse, themes, reload</b><span>Clicks and the wheel work through tmux, five themes, and files changed on disk are noticed within two seconds.</span></li>
     </ul>
     <figure>
@@ -235,11 +239,11 @@
       </ul>
     </div>
     <div>
-      <h3>Not yet, if you need</h3>
+      <h3>Not for you, if you need</h3>
       <ul>
-        <li>Language servers, plugins or scripting.</li>
+        <li>Plugins or scripting.</li>
         <li>Vim-style modal editing.</li>
-        <li>Split panes or rebindable keys. Both are planned.</li>
+        <li>A debugger, or staging and committing from the editor.</li>
       </ul>
     </div>
   </div>
