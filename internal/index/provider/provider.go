@@ -7,8 +7,8 @@
 // the results, so the editor behaves the same whether or not the machine has
 // the external tools installed.
 //
-// This indirection also exists so a language server can be added later as a
-// fourth provider without touching anything that calls into here.
+// Language servers are a fourth kind of provider, which answer about a place in
+// a file rather than about a name; see PositionIntel.
 package provider
 
 import (
@@ -410,6 +410,12 @@ func (r *Registry) References(ctx context.Context, sym string) []Location {
 // than having its results discarded; dropping them silently made an
 // incomplete answer indistinguishable from a complete one.
 func (r *Registry) ReferencesReport(ctx context.Context, sym string) ([]Location, Report) {
+	return r.referencesReport(ctx, sym, false)
+}
+
+// referencesReport is ReferencesReport; answered says something has already
+// found references, so a whole-tree scan is not worth its cost.
+func (r *Registry) referencesReport(ctx context.Context, sym string, answered bool) ([]Location, Report) {
 	var out []Location
 	var rep Report
 
@@ -436,9 +442,15 @@ func (r *Registry) ReferencesReport(ctx context.Context, sym string) ([]Location
 
 	var scanners []CodeIntel
 	found := 0
+	if answered {
+		found = 1
+	}
 	for _, p := range r.list() {
 		if !p.Available() {
 			continue
+		}
+		if _, ok := p.(PositionIntel); ok {
+			continue // asked by position, not by name; see ReferencesReportAt
 		}
 		if rs, ok := p.(ReferenceScanner); ok && rs.ScansForReferences() {
 			scanners = append(scanners, p)
