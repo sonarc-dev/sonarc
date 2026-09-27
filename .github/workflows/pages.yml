@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: site/gen/go.mod
           cache-dependency-path: site/gen/go.sum
