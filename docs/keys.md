@@ -125,3 +125,39 @@ where the answers come from.
 | `Esc` | close the diff |
 
 See [Git](git.md).
+
+## Changing keys
+
+Keys are rebound in `keys.conf`, beside `state.json` (see
+[where sonarc keeps things](getting-started.md#where-sonarc-keeps-things)).
+The quickest way in is the command palette: `F6`, then "change key bindings".
+That opens the file, starting it from a commented template, and saving it
+applies it at once.
+
+```
+# Comments are whole lines starting with #.
+# A direct key:
+bind Ctrl+B toggle-sidebar
+# A chord: Ctrl+K, then y.
+bind Ctrl+K y find-callers
+# Take keys away.
+unbind F12
+unbind Ctrl+K y
+```
+
+Keys are written the way `F1` shows them: `Ctrl+B`, `Alt+X`, `Alt+Left`,
+`Shift+F3`, `F12`. A later line wins over an earlier one and over the built-in
+keys. `sonarc -commands` lists every command name with the keys bound to it
+now, and any lines of `keys.conf` it could not use.
+
+Some keys are refused, with the reason, because they would never arrive or
+would get in the way:
+
+- `Ctrl+Shift` keys, which tmux and screen do not pass through;
+- `Ctrl+H`, `Ctrl+I`, `Ctrl+M` and `Ctrl+[`, which terminals send as
+  Backspace, Tab, Enter and Esc;
+- `Ctrl+K` itself, which starts every chord;
+- a plain character with no modifier, which you need for typing.
+
+A line sonarc cannot use is reported when the editor starts, and every other
+line still applies.

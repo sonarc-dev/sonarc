@@ -204,6 +204,14 @@ func (a *app) cmdSave() {
 	if !a.writeView(a.v()) {
 		return
 	}
+	if path := a.keysPath(); path != "" && a.v().Buf.Path() == path {
+		a.loadKeys()
+		if a.ui.IsErr {
+			return // loadKeys said what is wrong with the file
+		}
+		a.ui.Notify("saved and applied the key bindings")
+		return
+	}
 	a.ui.Notify("saved %s", a.v().Buf.Path())
 }
 

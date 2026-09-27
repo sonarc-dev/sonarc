@@ -74,6 +74,7 @@ sha256sum --check --ignore-missing checksums.txt
 
 ```sh
 sonarc -doctor                # reports terminal capabilities and tmux fixes
+sonarc -commands              # every command and the keys bound to it
 sonarc file.c                 # edit a file
 sonarc file.c:42              # at line 42, as compilers and grep print it
 sonarc file.c:42:7            # line 42, column 7
@@ -115,6 +116,7 @@ the same way.
 | `~/.config/sonarc/state.json` | the theme, the sidebar width, whether Changes is folded, and the last update check |
 | `~/.config/sonarc/sessions/` | one file per project: open files, cursors and open folders |
 | `~/.config/sonarc/positions.json` | where you left each file, for the last 1000 files |
+| `~/.config/sonarc/keys.conf` | your key bindings, if you have changed any; see [changing keys](keys.md#changing-keys) |
 
 On macOS the directory is `~/Library/Application Support/sonarc`. Deleting any
 of these only resets what it remembers.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/sonarc-dev/sonarc/internal/index/provider"
 	"github.com/sonarc-dev/sonarc/internal/ui"
@@ -60,7 +61,7 @@ func (a *app) cmdPalette() {
 	var entries []entry
 
 	for name, c := range commands {
-		entries = append(entries, entry{name: name, help: c.help, keys: bindingsFor(name)})
+		entries = append(entries, entry{name: name, help: c.help, keys: a.bindingsFor(name)})
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].help < entries[j].help })
 
@@ -92,27 +93,8 @@ func (a *app) runPicked(it ui.PickerItem) {
 }
 
 // bindingsFor renders every key bound to a command, direct keys and chords.
-func bindingsFor(name string) string {
-	var out []string
-	for spec, n := range keymap {
-		if n == name {
-			out = append(out, keyName(spec))
-		}
-	}
-	for r, n := range chords {
-		if n == name {
-			out = append(out, fmt.Sprintf("Ctrl+K %c", r))
-		}
-	}
-	sort.Strings(out)
-	s := ""
-	for i, b := range out {
-		if i > 0 {
-			s += "  /  "
-		}
-		s += b
-	}
-	return s
+func (a *app) bindingsFor(name string) string {
+	return strings.Join(a.keys.forCommand(name), "  /  ")
 }
 
 // symbolPickerItems builds picker entries from symbols, shared by the symbol

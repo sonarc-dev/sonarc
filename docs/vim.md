@@ -44,7 +44,8 @@ and needs no configuration to get them.
 
 - **Modal editing.** No operators, text objects, counts, `.` repeat or macros.
   That is the point of sonarc, and it is not coming back as an option.
-- **Scripting and plugins.** There is no configuration language.
+- **Scripting and plugins.** There is no configuration language, though any
+  key can be rebound in [`keys.conf`](keys.md#changing-keys).
 - **Split windows.** One file is on screen at a time for now.
 
 ## What you get without configuring anything

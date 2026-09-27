@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -60,6 +62,7 @@ func commandTable() map[string]command {
 		"palette":        {"show the command palette", (*app).cmdPalette},
 		"toggle-sidebar": {"show or hide the file-tree sidebar", (*app).cmdToggleSidebar},
 		"select-theme":   {"choose a color theme", (*app).cmdSelectTheme},
+		"edit-keys":      {"change key bindings (keys.conf)", (*app).cmdEditKeys},
 
 		// In-file search.
 		"find":         {"find in this file", (*app).cmdFind},
@@ -247,11 +250,11 @@ func (a *app) onKey(ev *tcell.EventKey) {
 
 	if ev.Key() == chordPrefix {
 		a.chord = chordPrefix
-		a.ui.Notify("Ctrl+K ...  (r refs, c callers, d callees, s symbol, f text, ? status)")
+		a.ui.Notify("%s", a.chordHint())
 		return
 	}
 
-	if name, ok := keymap[specOf(ev)]; ok {
+	if name, ok := a.keys.keys[specOf(ev)]; ok {
 		if c, ok := commands[name]; ok {
 			c.run(a)
 			return
@@ -280,6 +283,21 @@ func (a *app) onKey(ev *tcell.EventKey) {
 	a.editKey(ev)
 }
 
+// chordHint is the message shown after Ctrl+K: the chords for the commands
+// people reach for most, as they are bound now.
+func (a *app) chordHint() string {
+	hint := "Ctrl+K ..."
+	for _, c := range []struct{ name, label string }{
+		{"find-references", "refs"}, {"find-callers", "callers"}, {"find-callees", "callees"},
+		{"find-symbol", "symbol"}, {"find-text", "text"}, {"index-status", "status"},
+	} {
+		if r, ok := a.keys.chordFor(c.name); ok {
+			hint += fmt.Sprintf("  %c %s", r, c.label)
+		}
+	}
+	return hint
+}
+
 // runChord dispatches the second key of a Ctrl+K sequence.
 func (a *app) runChord(ev *tcell.EventKey) bool {
 	r := ev.Rune()
@@ -289,7 +307,7 @@ func (a *app) runChord(ev *tcell.EventKey) bool {
 	if r >= 'A' && r <= 'Z' {
 		r += 'a' - 'A' // chords are case-insensitive
 	}
-	name, ok := chords[r]
+	name, ok := a.keys.chords[r]
 	if !ok {
 		return false
 	}

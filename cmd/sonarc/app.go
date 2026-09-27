@@ -73,6 +73,9 @@ type app struct {
 	// themeName is the theme the user picked, empty for the default.
 	themeName string
 
+	// keys is the key map in use: the defaults with keys.conf applied.
+	keys *bindings
+
 	// updates is where new releases are looked for, and updateChecked and
 	// updateLatest what was last found there; see checkForUpdate.
 	updates       update.Source
@@ -124,7 +127,7 @@ type app struct {
 // newApp assembles an editor around a screen and a buffer.
 func newApp(scr *term.Screen, buf *buffer.Buffer) *app {
 	v := view.New(buf)
-	a := &app{scr: scr, views: []*view.View{v}, now: time.Now, warnedDisk: map[*view.View]buffer.Stamp{}}
+	a := &app{scr: scr, views: []*view.View{v}, now: time.Now, warnedDisk: map[*view.View]buffer.Stamp{}, keys: defaultBindings()}
 	a.ui = ui.New(scr, v)
 	a.ui.Changes = func() []vcs.Hunk { return a.hunksFor(a.v()) }
 	return a
@@ -173,6 +176,7 @@ func run(args []string, lineNo int) error {
 
 	a.statePath = defaultStatePath()
 	a.loadState()
+	a.loadKeys()
 	a.setProject(l, first)
 	if len(l.files) == 0 {
 		a.restoreSession()

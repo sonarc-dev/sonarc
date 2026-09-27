@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/sonarc-dev/sonarc/internal/term"
 	"github.com/sonarc-dev/sonarc/internal/update"
@@ -24,6 +25,7 @@ func main() {
 		lineNo      = flag.Int("line", 0, "put the cursor on this line")
 		traceInput  = flag.String("trace-input", "", "log terminal input and the events made of it to `file`")
 		doUpdate    = flag.Bool("update", false, "replace this binary with the latest release")
+		listCmds    = flag.Bool("commands", false, "list every command and the keys bound to it")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -35,6 +37,12 @@ func main() {
 	case *doctor:
 		term.Doctor(os.Stdout)
 		return
+	case *listCmds:
+		path := ""
+		if p := defaultStatePath(); p != "" {
+			path = filepath.Join(filepath.Dir(p), "keys.conf")
+		}
+		os.Exit(printCommands(os.Stdout, path))
 	case *doUpdate:
 		exe, err := executable()
 		if err != nil {
@@ -76,6 +84,7 @@ options:
   -trace-input FILE
               log what the terminal sends, to diagnose keys or clicks that
               do nothing
+  -commands   list every command and its keys, for keys.conf
   -update     replace this binary with the latest release
   -version    print version and exit
 

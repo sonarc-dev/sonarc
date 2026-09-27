@@ -82,7 +82,7 @@ func (a *app) helpLines() []string {
 	// Bindings from the keymap, so help and behavior cannot drift apart.
 	type row struct{ key, desc string }
 	var rows []row
-	for spec, name := range keymap {
+	for spec, name := range a.keys.keys {
 		c, ok := commands[name]
 		if !ok {
 			continue
