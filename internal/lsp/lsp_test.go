@@ -280,8 +280,8 @@ func TestClangdNeedsCompileCommands(t *testing.T) {
 func TestSummarize(t *testing.T) {
 	for in, want := range map[string]string{
 		"```c\nint  open(const char *path,\n    int flags)\n```\nOpens a file.": "int open(const char *path, int flags)",
-		"A plain paragraph.\n\nAnd another.":                                "A plain paragraph.",
-		"": "",
+		"A plain paragraph.\n\nAnd another.":                                    "A plain paragraph.",
+		"":                                                                      "",
 	} {
 		if got := summarize(in); got != want {
 			t.Errorf("summarize(%q) = %q, want %q", in, got, want)
