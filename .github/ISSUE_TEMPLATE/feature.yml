@@ -1,0 +1,21 @@
+name: Feature request
+description: Something sonarc should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task, and where sonarc gets in the way today. A real example helps more than a proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: How you imagine it working, including the keys if you have a preference. Remember that it has to work over ssh inside tmux.
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: How other editors do it
+      description: Optional. If vim, emacs, VS Code or another editor does this well, say how.
