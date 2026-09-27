@@ -35,13 +35,13 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0 # tags and history, for the notes
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: stable # the newest patched release; go.mod is only the minimum
       - run: go test ./...
       - run: make release VERSION="$TAG"
       - name: Record build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: build/sonarc-*
       - uses: sigstore/cosign-installer@v3

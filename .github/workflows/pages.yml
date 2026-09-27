@@ -42,9 +42,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version-file: site/gen/go.mod
+          go-version: stable
           cache-dependency-path: site/gen/go.sum
       - name: Build
         env:
@@ -55,9 +55,9 @@ jobs:
           rm -rf _site/gen
           cp install.sh _site/install.sh
           cd site/gen && go run . -root ../.. -out ../../_site
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

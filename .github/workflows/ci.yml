@@ -20,22 +20,32 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: stable # the newest patched release; go.mod is only the minimum
       - run: make lint
       - run: go test ./...
       - name: Race detector
         if: runner.os == 'Linux'
         run: make race
 
+  minimum-go:
+    # go.mod promises Go 1.24 is enough to build and test.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - run: go build ./... && go test ./...
+
   vulncheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version: stable # the newest patched release; go.mod is only the minimum
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - run: cd site/gen && go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
@@ -43,9 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version-file: site/gen/go.mod
+          go-version: stable
           cache-dependency-path: site/gen/go.sum
       - name: Vet and format the generator
         run: |
