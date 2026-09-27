@@ -12,6 +12,7 @@ import (
 	"github.com/sonarc-dev/sonarc/internal/index/cscope"
 	"github.com/sonarc-dev/sonarc/internal/index/provider"
 	"github.com/sonarc-dev/sonarc/internal/index/tags"
+	"github.com/sonarc-dev/sonarc/internal/lsp"
 	"github.com/sonarc-dev/sonarc/internal/search"
 	"github.com/sonarc-dev/sonarc/internal/term"
 	"github.com/sonarc-dev/sonarc/internal/ui"
@@ -75,6 +76,9 @@ type app struct {
 
 	// keys is the key map in use: the defaults with keys.conf applied.
 	keys *bindings
+
+	// lsp runs the language servers; nil when they are turned off.
+	lsp *lsp.Manager
 
 	// updates is where new releases are looked for, and updateChecked and
 	// updateLatest what was last found there; see checkForUpdate.

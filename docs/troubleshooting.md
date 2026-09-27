@@ -56,6 +56,17 @@ command palette (`F6`, "choose a color theme").
 - On macOS, install `universal-ctags`; the system ctags cannot build a usable
   index.
 
+## A language server gives wrong or no answers
+
+- `Ctrl+K ?` shows each server and its state: running, not started yet,
+  failed, or not used and why.
+- clangd needs a `compile_commands.json` to know how files are built; without
+  one it is not used. Most build systems can write one: `make
+  compile_commands.json` in the kernel, `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`,
+  or `bear -- make`.
+- A server that failed is retried after a minute. To stop using one, add
+  `LANGUAGE off` to `lsp.conf`; see [language servers](navigation.md#language-servers).
+
 ## Search covers the wrong directory
 
 Indexes and search cover the project root, found by walking up from what you

@@ -19,7 +19,14 @@ func (a *app) cmdPeekDefinition() {
 		a.ui.Notify("put the cursor on a symbol first")
 		return
 	}
+	at, precise := a.cursorAt()
 	a.startQuery("definition of "+sym, func(ctx context.Context) applyFunc {
+		// A language server describes the symbol itself, types and all.
+		if precise {
+			if hover, source := a.index.HoverAt(ctx, at); hover != "" {
+				return func(bool) { a.ui.Notify("%s  (%s)", hover, source) }
+			}
+		}
 		syms := a.index.Definitions(ctx, sym)
 		var sig string
 		if len(syms) > 0 {

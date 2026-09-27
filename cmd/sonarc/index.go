@@ -18,6 +18,13 @@ import (
 func (a *app) startIndex() {
 	a.index = &provider.Registry{}
 
+	// Language servers answer about the exact symbol under the cursor, so
+	// they come first; name-based queries pass them by.
+	a.startLSP()
+	if a.lsp != nil && a.lsp.Available() {
+		a.index.Add(a.lsp)
+	}
+
 	if p := cscope.Discover(a.root); p != nil {
 		a.cscope = p
 		a.index.Add(p)
@@ -104,6 +111,16 @@ func (a *app) cmdIndexStatus() {
 			lines = append(lines, line)
 		} else {
 			lines = append(lines, "  builtin   still indexing...")
+		}
+	}
+	if a.lsp != nil {
+		status := a.lsp.Status()
+		if len(status) == 0 {
+			status = []string{"none installed for this project's languages"}
+		}
+		lines = append(lines, "", "Language servers, asked first about the symbol under the cursor:", "")
+		for _, s := range status {
+			lines = append(lines, "  "+s)
 		}
 	}
 	lines = append(lines,

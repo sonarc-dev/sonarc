@@ -80,10 +80,15 @@ func (a *app) goToSymbol(loc provider.Location, sym string) bool {
 		return true
 	}
 	a.v().Goto(loc.Line)
+	line := loc.Line - 1
+	if loc.Col > 0 {
+		// A language server gives the exact column; trust it over a search.
+		a.v().SetCursor(a.v().Buf.Clamp(buffer.Pos{Line: line, Col: loc.Col - 1}))
+		return true
+	}
 	if sym == "" {
 		return true
 	}
-	line := loc.Line - 1
 	if col := indexWord(a.v().Buf.Line(line), sym); col >= 0 {
 		a.v().SetCursor(buffer.Pos{Line: line, Col: col})
 	}
@@ -120,8 +125,14 @@ func (a *app) cmdGotoDefinition() {
 		a.ui.Notify("put the cursor on a symbol first")
 		return
 	}
+	at, precise := a.cursorAt()
 	a.startQuery("definition of "+sym, func(ctx context.Context) applyFunc {
-		syms := a.index.Definitions(ctx, sym)
+		var syms []provider.Symbol
+		if precise {
+			syms = a.index.DefinitionsAt(ctx, at, sym)
+		} else {
+			syms = a.index.Definitions(ctx, sym)
+		}
 		return func(untouched bool) { a.showDefinitions(sym, syms, untouched) }
 	})
 }
@@ -153,7 +164,12 @@ func (a *app) showDefinitions(sym string, syms []provider.Symbol, untouched bool
 
 // cmdFindReferences lists every use of the symbol under the cursor.
 func (a *app) cmdFindReferences() {
+	at, precise := a.cursorAt()
 	a.runQuery("references to", func(ctx context.Context, sym string) ([]provider.Location, provider.Report, string) {
+		if precise {
+			locs, rep := a.index.ReferencesReportAt(ctx, at, sym)
+			return locs, rep, ""
+		}
 		locs, rep := a.index.ReferencesReport(ctx, sym)
 		return locs, rep, ""
 	})

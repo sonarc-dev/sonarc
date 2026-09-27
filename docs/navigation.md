@@ -20,16 +20,22 @@ not moved.
 
 ## Where answers come from
 
-Three providers answer queries. Every one is asked and the answers are merged,
-because ctags and cscope disagree often enough in real C code that trusting
-one silently is worse than offering both. Each answer is labelled with its
-source.
+Four kinds of provider answer queries. Each answer is labelled with its source.
 
 | Provider | Needs | Provides |
 |---|---|---|
+| **language server** | gopls, clangd, rust-analyzer, pyright or pylsp, typescript-language-server | the exact definition, references and a description of the symbol under the cursor |
 | **cscope** | `cscope.out` | definitions, references, callers, callees, assignments, includers |
 | **ctags** | a `tags` file | definitions, symbol search |
 | **built-in** | nothing | definitions, references and text search for C and C++, Go, and Python |
+
+A language server understands the code, so it knows which of several
+same-named functions the cursor is on; when it answers, its answer is the one
+used. Otherwise cscope, ctags and the built-in indexer are all asked and their
+answers merged, because ctags and cscope disagree often enough in real C code
+that trusting one silently is worse than offering both. References from a
+language server and from the indexes are merged, since a server may only know
+the files it has open.
 
 `Ctrl+K ?` shows which providers are answering in the current project.
 
@@ -37,6 +43,48 @@ The built-in indexer means sonarc is useful the moment it starts, even on a
 machine with neither cscope nor ctags. When a real index exists, the built-in
 one only lists files, which keeps memory low: on a kernel tree that is the
 difference between 2.5 GB and 18 MB.
+
+## Language servers
+
+sonarc uses a language server when one is installed for the file's language,
+with nothing to set up:
+
+| Language | Server |
+|---|---|
+| Go | `gopls` |
+| C and C++ | `clangd`, only where `compile_commands.json` exists |
+| Rust | `rust-analyzer` |
+| Python | `pyright-langserver`, or else `pylsp` |
+| TypeScript and JavaScript | `typescript-language-server` |
+
+A server starts the first time you look something up in a file of its
+language, so opening a project costs nothing, and it keeps running until you
+quit. It is asked about the text as it is in the editor, unsaved edits
+included. `Ctrl+K v` (peek) shows its description of the symbol, such as a
+function's full signature with types. `Ctrl+K ?` shows each server's state.
+A server that fails to start is left alone for a minute, and meanwhile the
+indexes answer as if it were not there. Servers installed with `go install`,
+`cargo` or `pip --user` are found even when an ssh session's `PATH` leaves
+their directories out.
+
+clangd runs without its background index. On a kernel tree that index takes
+hours of CPU and gigabytes of disk, while cscope already answers references,
+so clangd is used for what it does best: exact definitions and types. It is
+started only where a `compile_commands.json` says how each file is built,
+since without one its answers for C are guesses. The kernel writes one with
+`make compile_commands.json` after a build.
+
+To choose a different server, add arguments or turn one off, put a line per
+language in `lsp.conf`, beside `state.json`:
+
+```
+# language  command and arguments, or off
+c clangd --background-index
+python off
+```
+
+The languages are `c`, `cpp`, `go`, `python`, `rust`, `typescript` and
+`javascript`. Set `SONARC_NO_LSP=1` to use no language servers at all.
 
 ## Building the indexes
 

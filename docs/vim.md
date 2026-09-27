@@ -31,7 +31,7 @@ and needs no configuration to get them.
 | `:cs find i` | `Ctrl+K i`, files that include this one |
 | `:cs find a` | `Ctrl+K a`, assignments |
 | `:copen`, `:cn` | the results panel stays open; `F3` or `↓` for the next |
-| preview window, `Ctrl+W }` | `Ctrl+K v`, peek at the definition |
+| preview window, `Ctrl+W }`, `K` | `Ctrl+K v`, peek at the definition or the language server's description |
 | `:e file`, `:find` | `Ctrl+P` by fuzzy name, `Ctrl+O` by path |
 | `:ls`, `:b` | `Ctrl+K u` |
 | `:vsplit`, `:split` | `Ctrl+K 3`, `Ctrl+K 2` |
@@ -53,7 +53,8 @@ and needs no configuration to get them.
 ## What you get without configuring anything
 
 - cscope and ctags that work the moment a `cscope.out` or `tags` file exists,
-  and a built-in indexer when neither does.
+  a built-in indexer when neither does, and a language server such as gopls or
+  clangd whenever one is installed, with no plugin to configure.
 - Every matching definition in a picker, from all indexes at once, instead of
   the first tag match.
 - Lookups that run in the background, so a slow query never freezes the

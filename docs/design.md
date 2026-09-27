@@ -64,5 +64,6 @@ caught. Each now has a regression test.
 
 Debugging, staging and committing from the editor, Markdown and image preview,
 plugin scripting, and vi keybindings. The code-intelligence layer is an
-interface with several implementations, so new sources of answers can be added
-without disturbing the rest.
+interface with several implementations, which is how language servers were
+added alongside cscope, ctags and the built-in indexer without changing the
+commands that use them.
