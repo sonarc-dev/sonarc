@@ -55,7 +55,7 @@ jobs:
           rm -rf _site/gen
           cp install.sh _site/install.sh
           cd site/gen && go run . -root ../.. -out ../../_site
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
