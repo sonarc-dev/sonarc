@@ -16,6 +16,10 @@ type state struct {
 	Theme        string `json:"theme,omitempty"`
 	// ChangesCollapsed keeps the sidebar's Changes section closed.
 	ChangesCollapsed bool `json:"changes_collapsed,omitempty"`
+	// UpdateChecked is when GitHub was last asked for the latest release
+	// (unix seconds), and UpdateLatest what it said.
+	UpdateChecked int64  `json:"update_checked,omitempty"`
+	UpdateLatest  string `json:"update_latest,omitempty"`
 }
 
 // defaultStatePath is ~/.config/sonarc/state.json on Linux, or the platform's
@@ -58,6 +62,7 @@ func (a *app) loadState() {
 		a.ui.Sidebar.Width = max(st.SidebarWidth, ui.SidebarMinWidth)
 	}
 	a.ui.Sidebar.Changes.Collapsed = st.ChangesCollapsed
+	a.updateChecked, a.updateLatest = st.UpdateChecked, st.UpdateLatest
 	if st.Theme != "" {
 		a.setTheme(st.Theme) // an unknown name keeps the default
 	}
@@ -73,6 +78,8 @@ func (a *app) saveState() {
 		SidebarWidth:     a.ui.SidebarWidth(),
 		Theme:            a.themeName,
 		ChangesCollapsed: a.ui.Sidebar.Changes.Collapsed,
+		UpdateChecked:    a.updateChecked,
+		UpdateLatest:     a.updateLatest,
 	})
 }
 

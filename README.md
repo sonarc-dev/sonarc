@@ -47,6 +47,11 @@ the release's `checksums.txt`, and installs it to `~/.local/bin` without root.
 release. Binaries are also on the
 [releases page](https://github.com/sonarc-dev/sonarc/releases).
 
+To update later, run `sonarc -update`: it fetches the latest release the same
+way and replaces the binary in place. Once a day the editor asks GitHub whether
+a newer release exists and says so on the message line; set
+`SONARC_NO_UPDATE_CHECK=1` to turn that off, which also stops the request.
+
 With Go 1.24 or later:
 
 ```sh
@@ -66,6 +71,7 @@ Then, on the server:
 
 ```sh
 sonarc -doctor                # reports terminal capabilities and tmux fixes
+sonarc -update                # replaces this binary with the latest release
 sonarc file.c                 # edit a file
 sonarc file.c:42              # at line 42, as compilers and grep print it
 sonarc .                      # open the current directory as a project

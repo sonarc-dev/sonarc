@@ -15,6 +15,7 @@ import (
 	"github.com/sonarc-dev/sonarc/internal/search"
 	"github.com/sonarc-dev/sonarc/internal/term"
 	"github.com/sonarc-dev/sonarc/internal/ui"
+	"github.com/sonarc-dev/sonarc/internal/update"
 	"github.com/sonarc-dev/sonarc/internal/vcs"
 	"github.com/sonarc-dev/sonarc/internal/view"
 )
@@ -71,6 +72,12 @@ type app struct {
 	statePath string
 	// themeName is the theme the user picked, empty for the default.
 	themeName string
+
+	// updates is where new releases are looked for, and updateChecked and
+	// updateLatest what was last found there; see checkForUpdate.
+	updates       update.Source
+	updateChecked int64
+	updateLatest  string
 	// savedSession is the session file as last written, to skip rewriting
 	// it when nothing has changed.
 	savedSession string
@@ -173,6 +180,7 @@ func run(args []string, lineNo int) error {
 	a.startIndex()
 	a.startGit()
 	a.watchDisk()
+	a.checkForUpdate()
 
 	// -line only means something when a file is open to put the cursor in.
 	if len(l.files) > 0 {
