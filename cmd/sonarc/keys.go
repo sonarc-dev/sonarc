@@ -58,13 +58,20 @@ func commandTable() map[string]command {
 		"paste":          {"paste", (*app).cmdPaste},
 		"select-all":     {"select all", func(a *app) { a.v().SelectAll() }},
 		"goto-line":      {"go to line", (*app).cmdGotoLine},
-		"delete-line":    {"delete the current line", func(a *app) { a.v().DeleteLine() }},
+		"delete-line":    {"delete the current line", func(a *app) { v := a.v(); v.ForEach(v.DeleteLine) }},
 		"help":           {"show keyboard help", (*app).cmdHelp},
 		"open-fuzzy":     {"open a file by name (fuzzy)", (*app).cmdOpenFuzzy},
 		"palette":        {"show the command palette", (*app).cmdPalette},
 		"toggle-sidebar": {"show or hide the file-tree sidebar", (*app).cmdToggleSidebar},
 		"select-theme":   {"choose a color theme", (*app).cmdSelectTheme},
 		"edit-keys":      {"change key bindings (keys.conf)", (*app).cmdEditKeys},
+
+		// Multiple cursors.
+		"add-cursor-below":       {"add a cursor on the line below", func(a *app) { a.addCaret(a.v().AddCaretVertical(1)) }},
+		"add-cursor-above":       {"add a cursor on the line above", func(a *app) { a.addCaret(a.v().AddCaretVertical(-1)) }},
+		"add-next-occurrence":    {"add a cursor at the next occurrence of the selection", func(a *app) { a.addCaret(a.v().AddNextOccurrence()) }},
+		"select-all-occurrences": {"put a cursor on every occurrence of the selection", func(a *app) { a.reportCarets(a.v().SelectAllOccurrences()) }},
+		"split-selection-lines":  {"put a cursor on each line of the selection", func(a *app) { a.reportCarets(a.v().SplitSelectionIntoLines()) }},
 
 		// Split panes.
 		"split-right": {"split: show this file again, side by side", func(a *app) { a.cmdSplit(ui.SplitRight) }},
@@ -154,19 +161,22 @@ var keymap = map[keySpec]string{
 
 	// Navigation. Ctrl+] and Ctrl+T are what long-time vi users reach for, and
 	// cost nothing to support; F12 and Alt+Left are what everyone else expects.
-	{key: tcell.KeyCtrlRightSq}:              "goto-definition",
-	{key: tcell.KeyF12}:                      "goto-definition",
-	{key: tcell.KeyCtrlT}:                    "jump-back",
-	{key: tcell.KeyLeft, mod: tcell.ModAlt}:  "jump-back",
-	{key: tcell.KeyRight, mod: tcell.ModAlt}: "jump-forward",
-	{key: tcell.KeyDown, mod: tcell.ModAlt}:  "next-change",
-	{key: tcell.KeyUp, mod: tcell.ModAlt}:    "prev-change",
-	{key: tcell.KeyF7}:                       "find-references",
-	{key: tcell.KeyF3}:                       "next-match-or-result",
-	{key: tcell.KeyF3, mod: tcell.ModShift}:  "prev-match-or-result",
-	{key: tcell.KeyF2}:                       "prev-match-or-result",
-	{key: tcell.KeyF4}:                       "find-symbol",
-	{key: tcell.KeyF5}:                       "rebuild-index",
+	{key: tcell.KeyCtrlRightSq}:                              "goto-definition",
+	{key: tcell.KeyF12}:                                      "goto-definition",
+	{key: tcell.KeyCtrlT}:                                    "jump-back",
+	{key: tcell.KeyLeft, mod: tcell.ModAlt}:                  "jump-back",
+	{key: tcell.KeyRight, mod: tcell.ModAlt}:                 "jump-forward",
+	{key: tcell.KeyDown, mod: tcell.ModAlt}:                  "next-change",
+	{key: tcell.KeyDown, mod: tcell.ModAlt | tcell.ModShift}: "add-cursor-below",
+	{key: tcell.KeyUp, mod: tcell.ModAlt | tcell.ModShift}:   "add-cursor-above",
+	{key: tcell.KeyRune, r: 'n', mod: tcell.ModAlt}:          "add-next-occurrence",
+	{key: tcell.KeyUp, mod: tcell.ModAlt}:                    "prev-change",
+	{key: tcell.KeyF7}:                                       "find-references",
+	{key: tcell.KeyF3}:                                       "next-match-or-result",
+	{key: tcell.KeyF3, mod: tcell.ModShift}:                  "prev-match-or-result",
+	{key: tcell.KeyF2}:                                       "prev-match-or-result",
+	{key: tcell.KeyF4}:                                       "find-symbol",
+	{key: tcell.KeyF5}:                                       "rebuild-index",
 }
 
 // chordPrefix opens a two-key sequence. This is VS Code's own convention, and
@@ -212,6 +222,10 @@ var chords = map[rune]string{
 	'2': "split-below",
 	'3': "split-right",
 	';': "other-pane",
+	'.': "add-cursor-below",
+	',': "add-cursor-above",
+	'+': "add-next-occurrence",
+	'*': "select-all-occurrences",
 }
 
 func (a *app) onKey(ev *tcell.EventKey) {

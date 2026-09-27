@@ -257,8 +257,23 @@ func (u *UI) drawPane(p pane) {
 	v := p.v
 	textX, gutterW, w := p.x0, p.gutter, p.x1
 
-	selFrom, selTo := v.Selection()
-	hasSel := v.HasSelection()
+	// Every cursor's selection is drawn; with one cursor that is just its own.
+	type span struct{ from, to buffer.Pos }
+	var sels []span
+	carets := v.All()
+	for _, c := range carets {
+		if from, to := c.Selection(); from != to {
+			sels = append(sels, span{from, to})
+		}
+	}
+	inSel := func(p buffer.Pos) bool {
+		for _, s := range sels {
+			if !p.Less(s.from) && p.Less(s.to) {
+				return true
+			}
+		}
+		return false
+	}
 
 	var scratch []rune
 	var comb []rune
@@ -328,7 +343,7 @@ func (u *UI) drawPane(p pane) {
 			if inMatch(matches, pos) {
 				style = th.Match
 			}
-			if hasSel && !pos.Less(selFrom) && pos.Less(selTo) {
+			if len(sels) > 0 && inSel(pos) {
 				style = th.Selection
 			}
 
@@ -358,20 +373,31 @@ func (u *UI) drawPane(p pane) {
 
 		// A selection spanning a line break should show the newline as a
 		// highlighted cell, or multi-line selections look ragged.
-		if hasSel && lineNo >= selFrom.Line && lineNo < selTo.Line {
-			x := textX + gutterW + text.Width(ln, v.TabWidth) - v.Left
-			if x >= textX+gutterW && x < w {
-				u.Screen.SetContent(x, y, ' ', nil, th.Selection)
+		for _, s := range sels {
+			if lineNo >= s.from.Line && lineNo < s.to.Line {
+				x := textX + gutterW + text.Width(ln, v.TabWidth) - v.Left
+				if x >= textX+gutterW && x < w {
+					u.Screen.SetContent(x, y, ' ', nil, th.Selection)
+				}
+				break
 			}
 		}
 	}
 
-	if !p.focused {
-		cx := textX + gutterW + v.CursorCol() - v.Left
-		cy := p.y0 + v.Head.Line - v.Top
+	// The terminal's cursor marks the primary cursor of the focused pane;
+	// every other cursor is drawn as a block.
+	for i, c := range carets {
+		if i == 0 && p.focused {
+			continue
+		}
+		cx := textX + gutterW + text.ByteToCol(v.Buf.Line(c.Head.Line), c.Head.Col, v.TabWidth) - v.Left
+		cy := p.y0 + c.Head.Line - v.Top
 		if cx >= textX+gutterW && cx < w && cy >= p.y0 && cy < p.y0+p.rows {
 			r, comb, _, _ := u.Screen.GetContent(cx, cy)
-			u.Screen.SetContent(cx, cy, r, comb, th.Selection)
+			if r == 0 {
+				r = ' '
+			}
+			u.Screen.SetContent(cx, cy, r, comb, th.Selection.Reverse(true))
 		}
 	}
 }
@@ -465,6 +491,9 @@ func (u *UI) drawStatus(w, y int) {
 	}
 	if v.Buf.Large() {
 		x = u.drawText(x, y, "  [large file]", th.StatusDim, w)
+	}
+	if n := v.Carets(); n > 1 {
+		x = u.drawText(x, y, fmt.Sprintf("  %d cursors", n), th.StatusMod, w)
 	}
 	_ = x
 

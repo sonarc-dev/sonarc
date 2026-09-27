@@ -47,6 +47,9 @@ type View struct {
 	keepGoal  bool
 	clipboard []byte
 
+	// Extra holds any cursors besides the primary one; see multi.go.
+	Extra []Caret
+
 	// seen is the buffer version this view's positions are up to date with.
 	// A second view of the same buffer uses it to follow edits made in the
 	// first; see Sync.
@@ -102,6 +105,10 @@ func (v *View) Sync() {
 			v.Head = e.Map(v.Head)
 			v.Anchor = e.Map(v.Anchor)
 			v.Top = e.Map(buffer.Pos{Line: v.Top}).Line
+			for i := range v.Extra {
+				v.Extra[i].Head = e.Map(v.Extra[i].Head)
+				v.Extra[i].Anchor = e.Map(v.Extra[i].Anchor)
+			}
 		}
 	}
 	v.MarkSeen()
@@ -113,6 +120,11 @@ func (v *View) Sync() {
 func (v *View) MarkSeen() {
 	v.Head = v.Buf.Clamp(v.Head)
 	v.Anchor = v.Buf.Clamp(v.Anchor)
+	for i := range v.Extra {
+		v.Extra[i].Head = v.Buf.Clamp(v.Extra[i].Head)
+		v.Extra[i].Anchor = v.Buf.Clamp(v.Extra[i].Anchor)
+	}
+	v.merge()
 	v.Top = min(max(v.Top, 0), max(v.Buf.NumLines()-1, 0))
 	v.seen = v.Buf.Version()
 }
@@ -121,6 +133,7 @@ func (v *View) MarkSeen() {
 // from disk), keeping its place where it still exists.
 func (v *View) Adopt(b *buffer.Buffer) {
 	v.Buf = b
+	v.Extra = nil
 	if !b.Large() {
 		v.Syntax = syntax.New(syntax.Detect(b.Path()))
 	} else {
@@ -149,7 +162,10 @@ func (v *View) HasSelection() bool { return v.Head != v.Anchor }
 // Prefer this over assigning Head directly: setting one end of the selection
 // without the other leaves a stray selection that the next keystroke would
 // silently delete.
-func (v *View) SetCursor(p buffer.Pos) { v.setHead(p, false) }
+func (v *View) SetCursor(p buffer.Pos) {
+	v.Extra = nil
+	v.setHead(p, false)
+}
 
 // Selection returns the selected range in document order.
 func (v *View) Selection() (from, to buffer.Pos) {
@@ -174,6 +190,7 @@ func (v *View) ClearSelection() { v.Anchor = v.Head }
 
 // SelectAll selects the whole buffer.
 func (v *View) SelectAll() {
+	v.Extra = nil
 	v.Anchor = buffer.Pos{}
 	v.Head = v.Buf.End()
 	v.ScrollToCursor()
@@ -565,6 +582,7 @@ func (v *View) Undo() bool {
 	if !ok {
 		return false
 	}
+	v.Extra = nil
 	v.touched(p.Line)
 	v.Head, v.Anchor = p, p
 	v.goalCol = v.CursorCol()
@@ -578,6 +596,7 @@ func (v *View) Redo() bool {
 	if !ok {
 		return false
 	}
+	v.Extra = nil
 	v.touched(p.Line)
 	v.Head, v.Anchor = p, p
 	v.goalCol = v.CursorCol()
@@ -638,6 +657,7 @@ func (v *View) Scroll(n int) {
 
 // Goto places the cursor on a 1-based line number, centering the view.
 func (v *View) Goto(line int) {
+	v.Extra = nil
 	p := v.Buf.Clamp(buffer.Pos{Line: line - 1})
 	v.Head, v.Anchor = p, p
 	v.Top = p.Line - v.Height/2
@@ -665,7 +685,15 @@ func (v *View) PosAt(row, col int) buffer.Pos {
 // Click places the cursor at a screen position, starting a selection if
 // extending.
 func (v *View) Click(row, col int, extend bool) {
+	v.Extra = nil
 	v.setHead(v.PosAt(row, col), extend)
+}
+
+// AltClick adds a cursor where the pointer is, keeping the others.
+func (v *View) AltClick(row, col int) {
+	p := v.PosAt(row, col)
+	v.Extra = append(v.Extra, Caret{Head: p, Anchor: p, goal: text.ByteToCol(v.Buf.Line(p.Line), p.Col, v.TabWidth)})
+	v.merge()
 }
 
 // Cut removes the selection and returns it for the clipboard.

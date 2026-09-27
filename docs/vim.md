@@ -16,6 +16,8 @@ and needs no configuration to get them.
 | `dd` | `Ctrl+D` |
 | `yy`, `p` | `Ctrl+C` with nothing selected copies the line; `Ctrl+V` pastes |
 | `v`, `V` | `Shift` + arrows; triple-click selects a line |
+| `Ctrl+V` block insert | `Alt+Shift+↓` to add cursors down a column, then type |
+| `*` then `cgn` and `.` | `Alt+N` for each occurrence, then type once |
 | `/pattern`, `n`, `N` | `Ctrl+F`, `F3`, `Shift+F3` |
 | `:%s/old/new/gc` | `Ctrl+R`, confirming each |
 | `:42`, `42G` | `Ctrl+G` |

@@ -77,6 +77,27 @@ directories are read only when you expand them.
 The tree is on `Ctrl+E` rather than the more common `Ctrl+B` because `Ctrl+B`
 is tmux's default prefix: tmux would take it before the editor saw it.
 
+## Multiple cursors
+
+| Key | Action |
+|---|---|
+| `Alt+Shift+↓` / `Ctrl+K .` | add a cursor on the line below |
+| `Alt+Shift+↑` / `Ctrl+K ,` | add a cursor on the line above |
+| `Alt+N` / `Ctrl+K +` | select the word, then add a cursor at its next occurrence |
+| `Ctrl+K *` | a cursor at every occurrence of the selection |
+| `Esc` | back to one cursor |
+
+With several cursors, typing, deleting, moving and selecting happen at every
+one of them, and each keeps its own selection. Undo takes back a keystroke, or
+a run of typing, at all of them at once. The status bar counts the cursors.
+
+Copying at several cursors puts each selection on its own line of the
+clipboard; pasting at the same number of cursors gives one line to each, and
+otherwise pastes everything at every cursor. `Alt`+click adds a cursor in
+terminals that pass `Alt` with a click on. The command palette also has "put
+a cursor on each line of the selection", for editing the ends of a block of
+lines at once.
+
 ## Split panes
 
 | Key | Action |

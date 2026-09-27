@@ -50,6 +50,8 @@ type app struct {
 	// system one. Copy always writes here as well as attempting OSC 52, so
 	// copy/paste works even on a terminal that supports nothing.
 	clip []byte
+	// clipParts is what the last copy took from each of several cursors.
+	clipParts [][]byte
 
 	// pasting accumulates bracketed-paste content so it lands as one edit
 	// rather than as a stream of keystrokes that would trigger auto-indent.

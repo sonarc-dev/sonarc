@@ -99,6 +99,10 @@ func (a *app) onMouse(ev *tcell.EventMouse) {
 				break
 			}
 			if a.pressRegion == ui.RegionText {
+				if first && ev.Modifiers()&tcell.ModAlt != 0 {
+					a.altClick(x, y)
+					break
+				}
 				a.textPointer(x, y, first)
 			}
 		case ui.RegionSidebar:
@@ -172,4 +176,16 @@ func (a *app) panelClick(y int) {
 	a.ui.Sidebar.Focused = false
 	a.ui.SetPanelSel(idx)
 	a.previewResult()
+}
+
+// altClick adds a cursor where the pointer is, in terminals that pass Alt
+// with a click on to the program.
+func (a *app) altClick(x, y int) {
+	v := a.v()
+	row := y - a.ui.TextTop()
+	if row < 0 || row >= v.Height {
+		return
+	}
+	v.AltClick(row, max(a.ui.TextCol(x), 0))
+	a.reportCarets(v.Carets())
 }

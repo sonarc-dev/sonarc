@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
@@ -14,28 +15,61 @@ func (a *app) onPaste(ev *tcell.EventPaste) {
 	}
 	a.pasting = false
 	if len(a.pasteBuf) > 0 {
-		a.v().Insert(a.pasteBuf)
+		v := a.v()
+		v.ForEach(func() { v.Insert(a.pasteBuf) })
 	}
 }
 
 func (a *app) cmdCut() {
-	if s := a.v().Cut(); s != nil {
+	v := a.v()
+	if v.Carets() > 1 {
+		a.copyAll()
+		v.ForEach(func() { v.Cut() })
+		return
+	}
+	if s := v.Cut(); s != nil {
 		a.setClipboard(s)
 	}
 }
 
 func (a *app) cmdCopy() {
-	a.setClipboard(a.v().Copy())
+	v := a.v()
+	if v.Carets() > 1 {
+		a.copyAll()
+		a.ui.Notify("copied from %d cursors", v.Carets())
+		return
+	}
+	a.setClipboard(v.Copy())
 	a.ui.Notify("copied")
 }
 
-func (a *app) cmdPaste() { a.v().Paste(a.clip) }
+// copyAll puts every cursor's selection on the clipboard, one per line, and
+// remembers them apart so pasting at as many cursors gives one to each.
+func (a *app) copyAll() {
+	parts := a.v().CopyAll()
+	trimmed := make([][]byte, len(parts))
+	for i, p := range parts {
+		trimmed[i] = bytes.TrimSuffix(p, []byte("\n"))
+	}
+	a.setClipboard(bytes.Join(trimmed, []byte("\n")))
+	a.clipParts = parts
+}
+
+func (a *app) cmdPaste() {
+	v := a.v()
+	if v.Carets() > 1 {
+		v.PasteEach(a.clip, a.clipParts)
+		return
+	}
+	v.Paste(a.clip)
+}
 
 // setClipboard stores text internally and also offers it to the system
 // clipboard over OSC 52, which is what carries a copy from a server back to the
 // machine you are actually sitting at.
 func (a *app) setClipboard(s []byte) {
 	a.clip = append(a.clip[:0], s...)
+	a.clipParts = nil
 	a.scr.SetClipboard(s)
 }
 
@@ -52,8 +86,23 @@ func (a *app) cmdGotoLine() {
 	a.v().Goto(n)
 }
 
-// editKey handles ordinary editing and movement.
+// editKey handles ordinary editing and movement, at every cursor when there
+// are several. Esc with several cursors goes back to one.
 func (a *app) editKey(ev *tcell.EventKey) {
+	v := a.v()
+	if v.Carets() > 1 {
+		if ev.Key() == tcell.KeyEscape {
+			v.ClearCarets()
+			return
+		}
+		v.ForEach(func() { a.editOne(ev) })
+		return
+	}
+	a.editOne(ev)
+}
+
+// editOne applies one key at the cursor.
+func (a *app) editOne(ev *tcell.EventKey) {
 	extend := ev.Modifiers()&tcell.ModShift != 0
 	word := ev.Modifiers()&tcell.ModCtrl != 0
 	v := a.v()
@@ -112,5 +161,22 @@ func (a *app) editKey(ev *tcell.EventKey) {
 		}
 	case tcell.KeyRune:
 		v.Insert([]byte(string(ev.Rune())))
+	}
+}
+
+// addCaret reports on adding a cursor: how many there are, or why none was
+// added.
+func (a *app) addCaret(added bool) {
+	v := a.v()
+	if !added {
+		a.ui.Notify("no more places to add a cursor")
+		return
+	}
+	a.reportCarets(v.Carets())
+}
+
+func (a *app) reportCarets(n int) {
+	if n > 1 {
+		a.ui.Notify("%d cursors: typing goes to all of them; Esc goes back to one", n)
 	}
 }

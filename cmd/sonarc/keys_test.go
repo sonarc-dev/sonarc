@@ -200,6 +200,9 @@ func TestDocumentedKeysAreBound(t *testing.T) {
 			if strings.HasPrefix(k, "Ctrl+") && utf8.RuneCountInString(k) == 6 {
 				k = "Ctrl+" + strings.ToUpper(k[5:])
 			}
+			if strings.HasPrefix(k, "Alt+") && utf8.RuneCountInString(k) == 5 {
+				k = "Alt+" + strings.ToLower(k[4:]) // Alt+N is the key n with Alt
+			}
 			checked++
 			if !bound[k] {
 				t.Errorf("the docs document %s, but nothing is bound to it", m[1])
