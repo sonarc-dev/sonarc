@@ -302,7 +302,7 @@ footer a { text-decoration: none; }
   .toc .pages { max-height: none; }
   .toc summary { display: block; cursor: pointer; padding-block: 14px; font: 500 13px/1 var(--display); }
   .toc h2 { display: none; }
-  .toc ol:first-of-type { padding-bottom: 14px; }
+  .toc .pages { padding-bottom: 14px; }
   .rel { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 }
 
@@ -325,6 +325,8 @@ section.demo { padding-block: 72px 0; display: grid; grid-template-columns: minm
 
 /* Docs navigation and search */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* An element with the hidden attribute stays hidden whatever display a rule gives it. */
+[hidden] { display: none !important; }
 .search { position: relative; margin-bottom: 26px; }
 .search input {
   width: 100%; font: 14px/1.2 var(--body); color: var(--ink);
