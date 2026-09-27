@@ -1,0 +1,58 @@
+# For vim users
+
+sonarc is modeless: typing inserts text, and every command is a key
+combination or a chord after `Ctrl+K`. It keeps the parts of a vim and cscope
+workflow that matter most on a big C tree, including `Ctrl+]` and `Ctrl+T`,
+and needs no configuration to get them.
+
+## Your habits, mapped
+
+| In vim | In sonarc |
+|---|---|
+| `i`, `a`, `o` to insert | just type |
+| `:w` | `Ctrl+S` |
+| `:q`, `:wq` | `Ctrl+Q`, which asks about unsaved files |
+| `u`, `Ctrl+R` | `Ctrl+Z`, `Ctrl+Y` |
+| `dd` | `Ctrl+D` |
+| `yy`, `p` | `Ctrl+C` with nothing selected copies the line; `Ctrl+V` pastes |
+| `v`, `V` | `Shift` + arrows; triple-click selects a line |
+| `/pattern`, `n`, `N` | `Ctrl+F`, `F3`, `Shift+F3` |
+| `:%s/old/new/gc` | `Ctrl+R`, confirming each |
+| `:42`, `42G` | `Ctrl+G` |
+| `gg`, `G` | `Ctrl+Home`, `Ctrl+End` |
+| `Ctrl+]`, `gd` | `Ctrl+]` |
+| `Ctrl+T`, `Ctrl+O` | `Ctrl+T` or `Alt+←` |
+| `Ctrl+I` | `Alt+→` |
+| `:tag name`, `:ts` | `F4`, symbol search by name |
+| `:cs find s` | `F7`, find references |
+| `:cs find c` | `Ctrl+K c`, callers |
+| `:cs find d` | `Ctrl+K d`, functions called |
+| `:cs find t`, `:grep`, `:vimgrep` | `Ctrl+K f`, project text search |
+| `:cs find i` | `Ctrl+K i`, files that include this one |
+| `:cs find a` | `Ctrl+K a`, assignments |
+| `:copen`, `:cn` | the results panel stays open; `F3` or `↓` for the next |
+| preview window, `Ctrl+W }` | `Ctrl+K v`, peek at the definition |
+| `:e file`, `:find` | `Ctrl+P` by fuzzy name, `Ctrl+O` by path |
+| `:ls`, `:b` | `Ctrl+K u` |
+| `:bd` | `Ctrl+W` |
+| `:e!` | `Ctrl+K !` |
+| NERDTree, netrw | `Ctrl+E` |
+| `:set paste` | not needed: pastes arrive as one insertion |
+| `:Gdiff`, gitgutter | `F8`, and the gutter marks are always on |
+
+## What you give up
+
+- **Modal editing.** No operators, text objects, counts, `.` repeat or macros.
+  That is the point of sonarc, and it is not coming back as an option.
+- **Scripting and plugins.** There is no configuration language.
+- **Split windows.** One file is on screen at a time for now.
+
+## What you get without configuring anything
+
+- cscope and ctags that work the moment a `cscope.out` or `tags` file exists,
+  and a built-in indexer when neither does.
+- Every matching definition in a picker, from all indexes at once, instead of
+  the first tag match.
+- Lookups that run in the background, so a slow query never freezes the
+  editor.
+- A session that survives a dropped ssh connection.
